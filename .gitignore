@@ -15,9 +15,10 @@ venv.bak/
 
 # Config Files
 /config.py
+/config.json
 
 # Temp Files
-/temp/
+temp/
 
 # Log Files
 /logs/
