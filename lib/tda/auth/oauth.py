@@ -9,7 +9,11 @@ import requests
 from selenium import webdriver
 
 from config import client_id, redirect_uri
-from ..logger import auth_logger
+from ..logger import TDALogger
+
+
+# Set up loggers
+auth_logger = TDALogger("auth").logger
 
 # Chrome Driver Path
 chromedriver_path = Path.joinpath(Path(__file__).parent.parent.parent.parent, Path('drivers/chromedriver.exe'))
