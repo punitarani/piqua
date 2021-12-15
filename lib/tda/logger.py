@@ -5,40 +5,44 @@ import sys
 
 from defs import LOG_PATH_tda, LOG_PATH_tda_auth, LOG_PATH_tda_status
 
-log_formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+
+# Dict of all instantiated loggers
+loggers = {}
 
 
 # TDA Loggers
 class TDALogger:
     def __init__(self, logger_name: str):
+
         self.logger_name = logger_name
 
-        # Define log formatter
-        self.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
+        # If logger exists, return existing logger
+        if loggers.get(self.logger_name):
+            self.logger = loggers.get(self.logger_name)
 
-        # Define handlers
-        self.file_handler = logging.FileHandler(LOG_PATH_tda, mode='a')
-        self.stream_handler = logging.StreamHandler(sys.stdout)
+        # Otherwise create new logger
+        else:
+            # Define handlers
+            self.file_handler = logging.FileHandler(LOG_PATH_tda, mode='a')
+            self.stream_handler = logging.StreamHandler(sys.stdout)
 
-        # Add formatter to handlers
-        self.file_handler.setFormatter(self.formatter)
-        self.stream_handler.setFormatter(self.formatter)
+            # Define log formatter
+            self.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
-        # Get logger
-        self.logger = self.getLogger()
+            # Add formatter to handlers
+            self.file_handler.setFormatter(self.formatter)
+            self.stream_handler.setFormatter(self.formatter)
 
-    # Function to get logger
-    def getLogger(self) -> logging.Logger:
-        logger = logging.getLogger(name=self.logger_name)
-        self.addHandlers(logger)
+            # Get logger
+            self.logger = logging.getLogger(name=self.logger_name)
+            self.logger.propagate = False
 
-        # Set Default Level
-        logger.setLevel(logging.DEBUG)
+            # Set Default Level
+            self.logger.setLevel(logging.DEBUG)
 
-        return logger
+            # Add handler to logger
+            self.logger.addHandler(self.file_handler)
+            self.logger.addHandler(self.stream_handler)
 
-    # Function to add handlers to logger
-    def addHandlers(self, logger: logging.Logger) -> logging.Logger:
-        logger.addHandler(self.file_handler)
-        logger.addHandler(self.stream_handler)
-        return logger
+            # Save to loggers dict
+            loggers[self.logger_name] = self.logger
