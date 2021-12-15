@@ -8,7 +8,7 @@ from ..logger import TDALogger
 
 
 # Set up logger
-content_logger = TDALogger("auth").logger
+content_logger = TDALogger("content").logger
 
 
 # GET content from the given API endpoint while handling common status errors
@@ -29,27 +29,34 @@ def get_content(url: str, params=None, headers: str = get_token(), count_limit: 
         # GET content status
         status = content.status_code
 
+        # Generate log
+        log: str = url
+
+        # Add params if not None
+        if params:
+            log += ". Params: {}".format(params)
+
         # Status based actions
         # Normal
         if status == 200:
-            content_logger.debug(msg="200. SUCCESS: {}".format(url))
+            content_logger.debug(msg="200. SUCCESS: {}".format(log))
             return content
 
         else:
             # API rate limit reached
             if status == 429:
                 wait_time = 60.125
-                content_logger.error(msg="429. Rate Limit: {}".format(url))
+                content_logger.error(msg="429. Rate Limit: {}".format(log))
                 time.sleep(wait_time)
 
             # Passed a null value
             if status == 400:
-                content_logger.error(msg="400. Invalid params: {}".format(url))
+                content_logger.error(msg="400. Invalid params: {}".format(log))
                 break
 
             # Unauthorized / Invalid AuthToken header. Token is likely expired.
             elif status == 401:
-                content_logger.error(msg="401. Invalid token: {}".format(url))
+                content_logger.error(msg="401. Invalid token: {}".format(log))
 
                 # Get if another authentication process is running
                 if not get_status_cache(wait=False):
@@ -63,20 +70,20 @@ def get_content(url: str, params=None, headers: str = get_token(), count_limit: 
 
             # Forbidden / Access Restricted
             elif status == 403:
-                content_logger.error(msg="403. Forbidden or Access Restricted: {}".format(url))
+                content_logger.error(msg="403. Forbidden or Access Restricted: {}".format(log))
                 break
 
             # Data not found for given Params
             elif status == 404:
-                content_logger.error(msg="404. Data not found for given Params: {}, {}".format(url, params))
+                content_logger.error(msg="404. Data not found: {}".format(log))
                 break
 
             # Server error
             elif status == 500:
-                content_logger.error(msg="500. Server error: {}".format(url))
+                content_logger.error(msg="500. Server error: {}".format(log))
                 break
 
             # Temporary problem
             elif status == 503:
-                content_logger.error(msg="503. Temporary problem: {}".format(url))
+                content_logger.error(msg="503. Temporary problem: {}".format(log))
                 break
