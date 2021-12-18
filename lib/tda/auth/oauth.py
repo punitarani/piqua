@@ -166,7 +166,6 @@ def authenticate():
                          'redirect_uri': redirect_uri}
 
         # Post oAuth data and get token
-        # TODO: Chromedriver version error
         oauth_post = requests.post(oauth_url, headers=oauth_headers, data=oauth_payload)
 
         # Get refresh and access token
