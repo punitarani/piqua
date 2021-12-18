@@ -14,8 +14,8 @@ venv.bak/
 /data/
 
 # Config Files
-/config.py
-/config.json
+config.py
+config.json
 
 # Temp Files
 temp/
