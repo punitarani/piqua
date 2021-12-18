@@ -3,8 +3,7 @@
 import logging
 import sys
 
-from defs import LOG_PATH_tda, LOG_PATH_tda_auth, LOG_PATH_tda_status
-
+from defs import TDA_LOG
 
 # Dict of all instantiated loggers
 loggers = {}
@@ -23,7 +22,7 @@ class TDALogger:
         # Otherwise create new logger
         else:
             # Define handlers
-            self.file_handler = logging.FileHandler(LOG_PATH_tda, mode='a')
+            self.file_handler = logging.FileHandler(TDA_LOG, mode='a')
             self.stream_handler = logging.StreamHandler(sys.stdout)
 
             # Define log formatter
