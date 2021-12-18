@@ -153,8 +153,8 @@ def authenticate():
         # Log
         auth_logger.info('OAuth performed using refresh token.')
 
-    except Exception as error:
-        auth_logger.error("Error authenticating using refresh code: " + str(error))
+    except FileNotFoundError:
+        auth_logger.error("Error authenticating using refresh code: token.pickle file is missing.")
 
         # Create temp files
         create_temp_files()
