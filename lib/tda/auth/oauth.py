@@ -1,5 +1,5 @@
 # TD Ameritrade API Authentication
-
+import os
 import pickle
 import time
 import urllib.parse
@@ -10,7 +10,6 @@ from selenium import webdriver
 
 from config import client_id, redirect_uri
 from ..logger import TDALogger
-
 
 # Set up loggers
 auth_logger = TDALogger("auth").logger
@@ -137,7 +136,24 @@ def authenticate():
         oauth_post = requests.post(oauth_url, headers=oauth_headers, data=oauth_payload)
 
         # Get access token
-        access_token = oauth_post.json()['access_token']
+        # Error handle corrupt token.pickle file
+        try:
+            access_token = oauth_post.json()['access_token']
+        except KeyError:
+            auth_logger.error("token.pickle file is corrupted.")
+            auth_logger.info("Renaming corrupted token.pickle file.")
+            corrupted_token_path = os.path.join(temp_dir, "token_corrupted.pickle")
+
+            # Delete old corrupted token file
+            if os.path.exists(corrupted_token_path):
+                auth_logger.info("Deleting old corrupted token.pickle file.")
+                os.remove(corrupted_token_path)
+
+            os.rename(token_path, corrupted_token_path)
+
+            # Raise FileNotFoundError to redirect to manual user authentication
+            auth_logger.info("User authentication required.")
+            raise FileNotFoundError
 
         # Format access_token
         token_header = {'Authorization': "Bearer {}".format(access_token)}
@@ -153,6 +169,7 @@ def authenticate():
         # Log
         auth_logger.info('OAuth performed using refresh token.')
 
+    # User authentication by logging in
     except FileNotFoundError:
         auth_logger.error("Error authenticating using refresh code: token.pickle file is missing.")
 
