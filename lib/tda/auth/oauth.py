@@ -15,17 +15,17 @@ from ..logger import TDALogger
 auth_logger = TDALogger("auth").logger
 
 # Chrome Driver Path
-chromedriver_path = Path.joinpath(Path(__file__).parent.parent.parent.parent, Path('drivers/chromedriver.exe'))
-temp_dir = Path.joinpath(Path(__file__).parent.parent, Path('temp/'))
+CHROMEDRIVER = Path.joinpath(Path(__file__).parent.parent.parent.parent, Path('drivers/chromedriver.exe'))
+TEMP_DIR = Path.joinpath(Path(__file__).parent.parent, Path('temp/'))
 
 # token.pickle path
-token_path = Path.joinpath(temp_dir, 'token.pickle')
-status_path = Path.joinpath(temp_dir, 'tda_status.pickle')
+TOKEN_PATH = Path.joinpath(TEMP_DIR, 'token.pickle')
+STATUS_PATH = Path.joinpath(TEMP_DIR, 'tda_status.pickle')
 
 
 # Update status wait and time values
 def update_wait_status(condition: bool = False):
-    with open(status_path, 'wb') as status_obj:
+    with open(STATUS_PATH, 'wb') as status_obj:
         pickle.dump({"wait": condition,
                      "time": time.time()}, status_obj)
         status_obj.close()
@@ -34,7 +34,7 @@ def update_wait_status(condition: bool = False):
 # Get API status cache and wait based on status
 def get_status_cache(wait: bool = True):
     while True:
-        with open(status_path, 'rb') as status_obj:
+        with open(STATUS_PATH, 'rb') as status_obj:
             status_data = pickle.load(status_obj)
             wait_status = status_data.get("wait")
             time_status = status_data.get("time")
@@ -55,10 +55,10 @@ def get_status_cache(wait: bool = True):
 
 # Create temp files
 def create_temp_files():
-    for file_path in [token_path, status_path]:
+    for file_path in [TOKEN_PATH, STATUS_PATH]:
         if not file_path.exists():
             # Create temp folder if it doesn't exist
-            temp_dir.mkdir(parents=True, exist_ok=True)
+            TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
             # Create temp .pickle files
             with open(file_path, 'wb') as file_obj:
@@ -66,7 +66,7 @@ def create_temp_files():
                 file_obj.close()
 
             # Initiate status as False
-            if file_path == status_path:
+            if file_path == STATUS_PATH:
                 update_wait_status(False)
 
 
@@ -88,7 +88,7 @@ def authenticate():
 
         # Set up and open url in Selenium Chrome browser with version error checking
         try:
-            browser = webdriver.Chrome(executable_path=chromedriver_path)
+            browser = webdriver.Chrome(executable_path=CHROMEDRIVER)
             browser.get(auth_url)
         except Exception as E:
             if "version" in str(E):
@@ -123,7 +123,7 @@ def authenticate():
     # OAuth Payload
     # Use refresh to generate access token
     try:
-        token_obj = open(token_path, 'rb')
+        token_obj = open(TOKEN_PATH, 'rb')
         token_saved = pickle.load(token_obj)
         refresh_token_saved = token_saved.get('refresh_token')
         token_obj.close()
@@ -142,14 +142,14 @@ def authenticate():
         except KeyError:
             auth_logger.error("token.pickle file is corrupted.")
             auth_logger.info("Renaming corrupted token.pickle file.")
-            corrupted_token_path = os.path.join(temp_dir, "token_corrupted.pickle")
+            corrupted_token_path = os.path.join(TEMP_DIR, "token_corrupted.pickle")
 
             # Delete old corrupted token file
             if os.path.exists(corrupted_token_path):
                 auth_logger.info("Deleting old corrupted token.pickle file.")
                 os.remove(corrupted_token_path)
 
-            os.rename(token_path, corrupted_token_path)
+            os.rename(TOKEN_PATH, corrupted_token_path)
 
             # Raise FileNotFoundError to redirect to manual user authentication
             auth_logger.info("User authentication required.")
@@ -159,7 +159,7 @@ def authenticate():
         token_header = {'Authorization': "Bearer {}".format(access_token)}
 
         # Save token
-        with open(token_path, 'wb') as token_obj:
+        with open(TOKEN_PATH, 'wb') as token_obj:
             # Format output dict
             token_saved.update({'token_header': token_header})
             # Save to pickle
@@ -196,12 +196,12 @@ def authenticate():
         auth_logger.info('OAuth performed using authorization code.')
 
         # Read tokens
-        with open(token_path, 'rb') as token_obj:
+        with open(TOKEN_PATH, 'rb') as token_obj:
             token_saved = pickle.load(token_obj)
             token_obj.close()
 
         # Save tokens
-        with open(token_path, 'wb') as token_obj:
+        with open(TOKEN_PATH, 'wb') as token_obj:
             # Format output dict
             token_saved.update({'token_header': token_header})
             token_saved.update({'refresh_token': refresh_token})

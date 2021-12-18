@@ -4,7 +4,7 @@ from datetime import datetime
 
 import requests
 
-from .oauth import token_path, authenticate
+from .oauth import TOKEN_PATH, authenticate
 
 
 # Get token header
@@ -27,7 +27,7 @@ def get_token(test: bool = False):
 
     # Test token
     try:
-        token_file_obj = open(token_path, 'rb')
+        token_file_obj = open(TOKEN_PATH, 'rb')
         token_saved = pickle.load(token_file_obj)
         token_file_obj.close()
         token_header = token_saved.get('token_header')
