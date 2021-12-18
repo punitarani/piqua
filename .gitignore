@@ -23,3 +23,7 @@ temp/
 # Log Files
 /logs/
 *.log
+
+# Drivers
+/drivers/chromedriver.exe
+/drivers/chromedriver_old.exe
