@@ -10,6 +10,7 @@ from selenium import webdriver
 
 from config import client_id, redirect_uri, host
 from ..logger import TDALogger
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Set up loggers
 auth_logger = TDALogger("auth").logger
@@ -341,11 +342,11 @@ class Authenticate:
         self.logger.debug("Authenticate with remote login.")
         url = self.generate_url()
 
-        # DO NOT LOG. ONLY PRINT
-        print(f"Log in using: {url}")
         self.logger.debug("Printed login url.")
-
         self.logger.debug("Waiting for user to input url with code after logging in.")
+
+        # DO NOT LOG. ONLY PRINT
+        print(f"\n\nLog in using: {url}")
         url_code = input("Please enter url after logging in: ")
 
         # Parse code form url
@@ -419,3 +420,5 @@ class Authenticate:
 
         else:
             raise ValueError("Error generating oauth_payload. Missing code or refresh_token")
+
+    # Remote listen
