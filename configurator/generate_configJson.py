@@ -8,6 +8,8 @@ logger = SystemLogger("main").logger
 
 # Create Config.json template
 def create_configJson(overwrite: bool = False, take_input: bool = False):
+    logger.info("Creating config.json file.")
+
     config_data = {
         "host": "local",
         "tda": {
@@ -18,8 +20,12 @@ def create_configJson(overwrite: bool = False, take_input: bool = False):
     }
 
     # Read config.json file
-    with open(CONFIG_JSON, "r") as cfg:
-        data = json.load(cfg)
+    try:
+        with open(CONFIG_JSON, "r") as cfg:
+            data = json.load(cfg)
+    except json.JSONDecodeError:
+        logger.info("Could not read existing config.json file.")
+        data = {}
 
     # Write data to config.json
     if data == {} or overwrite:
@@ -39,7 +45,7 @@ def create_configJson(overwrite: bool = False, take_input: bool = False):
                 host = input("Please enter valid host type: ").lower()
 
             # TDA Account ID
-            tda_account_id = input("Enter TD Ameritrade Account ID")
+            tda_account_id = input("Enter TD Ameritrade Account ID: ")
 
             # TDA Client ID
             tda_client_id = input("Enter TDA API Client ID: ")
