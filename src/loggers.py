@@ -20,6 +20,7 @@ class SystemLogger:
 
         # Otherwise create new logger
         else:
+            # input params
             self.add_file_handler = add_file_handler
             self.add_stream_handler = add_stream_handler
 
@@ -37,6 +38,9 @@ class SystemLogger:
 
             # Set default logging level to DEBUG
             self.logger.setLevel(logging.DEBUG)
+
+            # Save to loggers dict
+            loggers[self.logger_name] = self.logger
 
     # Function to get logger
     def getLogger(self) -> logging.Logger:
