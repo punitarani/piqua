@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 from selenium import webdriver
 
-from config import client_id, redirect_uri
+from config import client_id, redirect_uri, host
 from ..logger import TDALogger
 
 # Set up loggers
@@ -210,3 +210,212 @@ def authenticate():
             token_obj.close()
 
     return token_header
+
+
+class Authenticate:
+    def __init__(self, override_mode: str = None, generate_new_refresh_token: bool = False):
+        # User info
+        self.redirect_uri = redirect_uri
+        self.client_id = client_id
+
+        # Set up logger
+        self.logger = TDALogger("auth").logger
+
+        # oauth variables
+        self.oauth_url = r'https://api.tdameritrade.com/v1/oauth2/token'
+        self.oauth_headers = {"Content-type": r'application/x-www-form-urlencoded'}
+
+        # Mode
+        if not override_mode:
+            self.mode = host
+        else:
+            self.mode = override_mode
+
+        self.token_header = self.main(mode=self.mode, force_user_auth=generate_new_refresh_token)
+
+    # Main function
+    def main(self, mode: str, force_user_auth: bool) -> dict:
+        """
+        :param force_user_auth: Forces user login to create new refresh token
+        :param mode: "local" or "host". Decides if login url should be printed or opened in selenium
+        :return: token_header
+        """
+
+        # Try to use local refresh code to generate
+        if not force_user_auth:
+            self.logger.debug("Authenticate with token file.")
+
+            token = self.read_token_file()
+            try:
+                refresh_token = token.get("refresh_token")
+                token_header = self.oauth(refresh_token=refresh_token)
+                return token_header
+
+            except KeyError:
+                self.logger.error("Couldn't find refresh_token in token file")
+
+        else:
+            if mode == "local":
+                token_header = self.login()
+            else:
+                token_header = self.remote_login()
+
+            return token_header
+
+    # Read local token file and return its contents
+    def read_token_file(self) -> dict:
+        self.logger.debug("Reading token.pickle file.")
+        with open(TOKEN_PATH, "rb") as token:
+            data = pickle.load(token)
+            return data
+
+    # Generate user login URL
+    def generate_url(self) -> str:
+        self.logger.debug("Generating user login URL with config credentials.")
+
+        # define the components to build a URL
+        method = 'GET'
+        url = 'https://auth.tdameritrade.com/auth?'
+        client_code = self.client_id + '@AMER.OAUTHAP'
+        auth_payload = {'response_type': 'code',
+                        'redirect_uri': self.redirect_uri,
+                        'client_id': client_code}
+
+        # build the URL
+        auth_url = requests.Request(method, url, params=auth_payload).prepare().url
+
+        # Log
+        self.logger.debug("Generated user login url.")
+
+        return auth_url
+
+    # Get code from url after user logs in
+    def parse_url(self, url: str) -> str:
+        self.logger.debug("Parsing oauth code from url.")
+        code = urllib.parse.unquote(url.split('code=')[1])
+        return code
+
+    # Local Mode: Opens user login url in selenium chrome browser
+    def login(self, url: str = None) -> dict:
+        self.logger.debug("Authenticate with user login.")
+
+        # Generate url if not provided
+        if not url:
+            url = self.generate_url()
+
+        # Set up and open url in Selenium Chrome browser with version error checking
+        try:
+            browser = webdriver.Chrome(executable_path=CHROMEDRIVER)
+            browser.get(url)
+        except Exception as E:
+            if "version" in str(E):
+                raise ValueError("Chromedriver version mismatch")
+            else:
+                raise ValueError(E)
+
+        # Wait for Log in authentication
+        while True:
+            # Get current url
+            current_url = browser.current_url
+            # if url has 'code='
+            if len(current_url.split('code=')) > 1:
+                # Close browser
+                browser.quit()
+
+                # Parse url to get code
+                code = self.parse_url(url=current_url)
+
+                # log
+                auth_logger.info('OAuth Log In Successful')
+
+            else:
+                continue
+
+            # Perform OAuth with code
+            token_header = self.oauth(code=code)
+
+            return token_header
+
+    # Remote Mode: Print url and takes url input after logging in
+    def remote_login(self) -> dict:
+        self.logger.debug("Authenticate with remote login.")
+        url = self.generate_url()
+
+        # DO NOT LOG. ONLY PRINT
+        print(f"Log in using: {url}")
+        self.logger.debug("Printed login url.")
+
+        self.logger.debug("Waiting for user to input url with code after logging in.")
+        url_code = input("Please enter url after logging in: ")
+
+        # Parse code form url
+        code = self.parse_url(url=url_code)
+
+        # Perform OAuth with code
+        token_header = self.oauth(code=code)
+
+        return token_header
+
+    # POST auth code to create refresh and access token
+    def oauth(self, code: str = None, refresh_token: str = None) -> dict:
+        # Log
+        if code:
+            self.logger.debug("Performing OAuth with code.")
+        elif refresh_token:
+            self.logger.debug("Performing OAuth with refresh_token.")
+        else:
+            self.logger.error("Missing code and refresh_token params`1.")
+
+        # Get oAuth access code
+        oauth_payload = self.generate_oauth_payload(code=code, refresh_token=refresh_token)
+
+        # Post oAuth data and get token
+        oauth_post = requests.post(self.oauth_url, headers=self.oauth_headers, data=oauth_payload)
+
+        # Get refresh and access token
+        refresh_token = oauth_post.json()['refresh_token']
+        access_token = oauth_post.json()['access_token']
+
+        # Format access_token
+        token_header = {'Authorization': "Bearer {}".format(access_token)}
+
+        # Log
+        auth_logger.info('OAuth performed successfully.')
+
+        # Read token file
+        token_saved = self.read_token_file()
+
+        # Save or Update token file
+        with open(TOKEN_PATH, 'wb') as token_obj:
+            # Format output dict
+            token_saved.update({'token_header': token_header})
+            token_saved.update({'refresh_token': refresh_token})
+
+            # Save to pickle
+            pickle.dump(token_saved, token_obj)
+
+        return token_header
+
+    # Generate oauth payload from code
+    def generate_oauth_payload(self, code: str = None, refresh_token: str = None) -> dict:
+
+        # If code is given: uses code to generate refresh token and access token
+        if code:
+            payload = {'grant_type': 'authorization_code',
+                       'access_type': 'offline',
+                       'code': code,
+                       'client_id': self.client_id,
+                       'redirect_uri': self.redirect_uri}
+
+            return payload
+
+        # If code is not given: generates payload to use local refresh token to generate access token
+        elif refresh_token:
+            payload = {'grant_type': 'refresh_token',
+                       'refresh_token': refresh_token,
+                       'client_id': client_id}
+
+            return payload
+
+        else:
+            raise ValueError("Error generating oauth_payload. Missing code or refresh_token")
