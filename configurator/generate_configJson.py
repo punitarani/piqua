@@ -56,7 +56,7 @@ def create_configJson(overwrite: bool = False, take_input: bool = False):
                 tda_redirect_url = "https://localhost"
                 print("Using default: {}".format(tda_redirect_url))
 
-            while tda_redirect_url[:4] != "http" or tda_redirect_url[:7] != "192.168":
+            while tda_redirect_url[:4] != "http" and tda_redirect_url[:7] != "192.168":
                 tda_redirect_url = input("Please enter valid Redirect URL (http or https://... or local ip "
                                          "192.168...): ").lower()
 
