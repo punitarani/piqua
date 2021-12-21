@@ -12,7 +12,7 @@ if __name__ == "__main__":
     print("(1) Complete\n"
           "(2) Create/Edit config.json\n"
           "(3) Authenticate TDA API\n")
-    option = input("Enter build config option (1): ")
+    option = int(input("Enter build config option (1-3): "))
 
     if option == 1:
         createFolders()
