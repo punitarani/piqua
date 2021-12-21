@@ -4,10 +4,11 @@ import pickle
 import time
 import urllib.parse
 from pathlib import Path
-#from socket import socket, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM
 
 import requests
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 from config import client_id, redirect_uri, host
 from ..logger import TDALogger
@@ -232,7 +233,7 @@ class Authenticate:
         else:
             self.mode = override_mode
 
-        if not self.test_token():
+        if not self.test_token() or generate_new_refresh_token:
             self.token_header = self.main(mode=self.mode, force_user_auth=generate_new_refresh_token)
         else:
             self.token_header = self.read_token_file().get("token_header")
@@ -250,7 +251,6 @@ class Authenticate:
             self.logger.debug("Authenticate with token file.")
 
             token = self.read_token_file()
-            print(token)
 
             try:
                 refresh_token = token.get("refresh_token")
@@ -340,6 +340,12 @@ class Authenticate:
         try:
             browser = webdriver.Chrome(executable_path=CHROMEDRIVER)
             browser.get(url)
+
+        except WebDriverException:
+            user_quit_msg = "User closed browser before login process completed."
+            self.logger.error(user_quit_msg)
+            raise ValueError(user_quit_msg)
+
         except Exception as E:
             if "version" in str(E):
                 raise ValueError("Chromedriver version mismatch")
@@ -350,8 +356,17 @@ class Authenticate:
         while True:
             # Get current url
             current_url = browser.current_url
+
             # if url has 'code='
-            if len(current_url.split('code=')) > 1:
+            try:
+                current_url_split = current_url.split('code=')
+
+            except AttributeError:
+                user_quit_msg = "User closed browser before login process completed."
+                self.logger.error(user_quit_msg)
+                raise ValueError(user_quit_msg)
+
+            if len(current_url_split) > 1:
                 # Close browser
                 browser.quit()
 
@@ -370,7 +385,7 @@ class Authenticate:
             return token_header
 
     # Remote Mode: Print url and takes url input after logging in
-    def remote_login(self) -> dict:
+    def remote_login(self, listen: bool = False) -> dict:
         self.logger.debug("Authenticate with remote login.")
         url = self.generate_url()
 
@@ -379,10 +394,15 @@ class Authenticate:
 
         # DO NOT LOG. ONLY PRINT
         print(f"\n\nLog in using: {url}")
-        url_code = input("Please enter url after logging in: ")
 
-        # Parse code form url
-        code = self.parse_url(url=url_code)
+        if listen:
+            # Start server to listen to redirect url after logging in
+            code = self.remote_listen()
+        else:
+            url_code = input("Please enter url after logging in: ")
+
+            # Parse code form url
+            code = self.parse_url(url=url_code)
 
         # Perform OAuth with code
         token_header = self.oauth(code=code)
@@ -405,13 +425,10 @@ class Authenticate:
         # Post oAuth data and get token
         self.logger.debug("Posting OAuth data.")
         oauth_post = requests.post(self.oauth_url, headers=self.oauth_headers, data=oauth_payload)
+        print(oauth_post.json())
 
         # Get refresh and access token
-        try:
-            refresh_token = oauth_post.json()['refresh_token']
-        except KeyError:
-            pass
-
+        refresh_token = oauth_post.json()['refresh_token']
         access_token = oauth_post.json()['access_token']
 
         # Format access_token
@@ -461,3 +478,37 @@ class Authenticate:
             msg = "Error generating OAuth payload. Missing code or refresh_token"
             self.logger.error(msg)
             raise ValueError(msg)
+
+    # Remote listen to redirect url after login. Outputs OAuth code
+    # TODO: DO NOT USE. BUGGY
+    def remote_listen(self) -> str:
+        HOST = self.redirect_uri
+        PORT = 8888
+
+        host_split = HOST.split(":")
+        if len(host_split) >= 3:
+            HOST = host_split[1][2:]
+            PORT = int(host_split[2])
+
+        elif "://" in HOST:
+            HOST = host_split[1][2:]
+
+        self.logger.info(f"Attempting to start server at {HOST}:{PORT}")
+
+        # Create a server socket, bind it to a port and start listening
+        serverSocket = socket(AF_INET, SOCK_STREAM)
+        serverSocket.bind((HOST, PORT))
+        serverSocket.listen(5)
+
+        self.logger.info(f"Listening to {HOST}:{PORT}")
+
+        cliSocket, address = serverSocket.accept()
+        print('Received a connection from:', address)
+
+        full_url_bytes = cliSocket.recv(4*1024)
+        full_url = full_url_bytes.decode('ASCII')
+
+        code = full_url.split("code=")[-1]
+        code = code.split(" HTTP")[0]
+
+        return code
