@@ -9,9 +9,9 @@ from lib.tda.auth import Authenticate
 
 if __name__ == "__main__":
     print("Options: ")
-    print("(1) Complete"
-          "(2) Create/Edit config.json"
-          "(3) Authenticate TDA API")
+    print("(1) Complete\n"
+          "(2) Create/Edit config.json\n"
+          "(3) Authenticate TDA API\n")
     option = input("Enter build config option (1): ")
 
     if option == 1:
