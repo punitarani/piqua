@@ -4,13 +4,13 @@ import pickle
 import time
 import urllib.parse
 from pathlib import Path
+#from socket import socket, AF_INET, SOCK_STREAM
 
 import requests
 from selenium import webdriver
 
 from config import client_id, redirect_uri, host
 from ..logger import TDALogger
-import socket
 
 # Set up loggers
 auth_logger = TDALogger("auth").logger
@@ -232,7 +232,10 @@ class Authenticate:
         else:
             self.mode = override_mode
 
-        self.token_header = self.main(mode=self.mode, force_user_auth=generate_new_refresh_token)
+        if not self.test_token():
+            self.token_header = self.main(mode=self.mode, force_user_auth=generate_new_refresh_token)
+        else:
+            self.token_header = self.read_token_file().get("token_header")
 
     # Main function
     def main(self, mode: str, force_user_auth: bool) -> dict:
@@ -268,6 +271,27 @@ class Authenticate:
         with open(TOKEN_PATH, "rb") as token:
             data = pickle.load(token)
             return data
+
+    # Test if token has expired
+    @staticmethod
+    def test_token(token_header: dict = None) -> bool:
+        if not token_header:
+            with open(TOKEN_PATH, 'rb') as token_obj:
+                token_saved = pickle.load(token_obj)
+
+            token_header = token_saved.get('token_header')
+
+        endpoint = r'https://api.tdameritrade.com/v1/userprincipals'
+        content = requests.get(url=endpoint, headers=token_header)
+
+        # User Principals JSON
+        response = content.json()
+
+        # Raise ValueError if token has expired
+        if 'error' in response.keys():
+            return False
+
+        return True
 
     # Generate user login URL
     def generate_url(self) -> str:
