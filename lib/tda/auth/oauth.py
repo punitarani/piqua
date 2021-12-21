@@ -247,6 +247,7 @@ class Authenticate:
             self.logger.debug("Authenticate with token file.")
 
             token = self.read_token_file()
+            print(token)
 
             try:
                 refresh_token = token.get("refresh_token")
@@ -378,10 +379,15 @@ class Authenticate:
         oauth_payload = self.generate_oauth_payload(code=code, refresh_token=refresh_token)
 
         # Post oAuth data and get token
+        self.logger.debug("Posting OAuth data.")
         oauth_post = requests.post(self.oauth_url, headers=self.oauth_headers, data=oauth_payload)
 
         # Get refresh and access token
-        refresh_token = oauth_post.json()['refresh_token']
+        try:
+            refresh_token = oauth_post.json()['refresh_token']
+        except KeyError:
+            pass
+
         access_token = oauth_post.json()['access_token']
 
         # Format access_token
@@ -416,7 +422,7 @@ class Authenticate:
                        'code': code,
                        'client_id': self.client_id,
                        'redirect_uri': self.redirect_uri}
-
+            self.logger.debug("Generated OAuth payload with code.")
             return payload
 
         # If code is not given: generates payload to use local refresh token to generate access token
@@ -424,8 +430,10 @@ class Authenticate:
             payload = {'grant_type': 'refresh_token',
                        'refresh_token': refresh_token,
                        'client_id': client_id}
-
+            self.logger.debug("Generated OAuth payload with refresh token.")
             return payload
 
         else:
-            raise ValueError("Error generating oauth_payload. Missing code or refresh_token")
+            msg = "Error generating OAuth payload. Missing code or refresh_token"
+            self.logger.error(msg)
+            raise ValueError(msg)
