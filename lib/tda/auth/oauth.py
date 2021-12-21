@@ -10,7 +10,7 @@ from selenium import webdriver
 
 from config import client_id, redirect_uri, host
 from ..logger import TDALogger
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import socket
 
 # Set up loggers
 auth_logger = TDALogger("auth").logger
@@ -247,21 +247,19 @@ class Authenticate:
             self.logger.debug("Authenticate with token file.")
 
             token = self.read_token_file()
+
             try:
                 refresh_token = token.get("refresh_token")
                 token_header = self.oauth(refresh_token=refresh_token)
-                return token_header
 
             except KeyError:
                 self.logger.error("Couldn't find refresh_token in token file")
+                token_header = self.login_mode(mode=mode)
 
         else:
-            if mode == "local":
-                token_header = self.login()
-            else:
-                token_header = self.remote_login()
+            token_header = self.login_mode(mode=mode)
 
-            return token_header
+        return token_header
 
     # Read local token file and return its contents
     def read_token_file(self) -> dict:
@@ -295,6 +293,15 @@ class Authenticate:
         self.logger.debug("Parsing oauth code from url.")
         code = urllib.parse.unquote(url.split('code=')[1])
         return code
+
+    # Logs in based on mode
+    def login_mode(self, mode: str):
+        if mode == "local":
+            tkn_hdr = self.login()
+        else:
+            tkn_hdr = self.remote_login()
+
+        return tkn_hdr
 
     # Local Mode: Opens user login url in selenium chrome browser
     def login(self, url: str = None) -> dict:
@@ -395,6 +402,8 @@ class Authenticate:
             # Save to pickle
             pickle.dump(token_saved, token_obj)
 
+            auth_logger.debug('Updated token.pickle file.')
+
         return token_header
 
     # Generate oauth payload from code
@@ -420,5 +429,3 @@ class Authenticate:
 
         else:
             raise ValueError("Error generating oauth_payload. Missing code or refresh_token")
-
-    # Remote listen
