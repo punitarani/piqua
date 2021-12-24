@@ -384,6 +384,32 @@ class StreamClient:
         else:
             self.logger.error(f"Login failed. Response: {response}")
 
+    # Logout and disconnect
+    async def logout(self, disconnect: bool = True):
+        service = "ADMIN"
+        command = "LOGOUT"
+
+        if self._logged_in:
+            request, request_id = self._make_request(service=service, command=command, params={})
+
+            # Send and Wait for Response
+            async with self._lock:
+                self.logger.info("Sending Logout request")
+                await self.send({'requests': [request]})
+                response = await self.await_response(request_id=request_id, service=service, command=command)
+
+            if response.get("code") == 0:
+                self.logger.info(f"Logout SUCCESS. msg: {response.get('msg')}")
+                self._logged_in = False
+            else:
+                self.logger.error(f"Logout FAILED. Response: {response}")
+
+        else:
+            self.logger.info("Not logged in. No need to logout")
+
+        if disconnect:
+            await self.disconnect()
+
     ####################################################################################################################
     # ACCT_ACTIVITY
     async def account_activity_sub(self):
