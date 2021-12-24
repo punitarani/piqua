@@ -281,7 +281,7 @@ class StreamClient:
     async def service_request(self,
                               service: str,
                               command: str,
-                              symbols: list,
+                              symbols: list = None,
                               fields: int = None):
 
         """
@@ -385,7 +385,98 @@ class StreamClient:
             self.logger.error(f"Login failed. Response: {response}")
 
     ####################################################################################################################
+    # ACCT_ACTIVITY
+    async def account_activity_sub(self):
+        """
+        Subscribe to account activity
+        """
+        service = "ACCT_ACTIVITY"
+        command = "SUBS"
 
+        _request, request_id = self._make_request(service=service, command=command, params={})
+
+        request = {
+            "requests": [
+                {
+                    "service": service,
+                    "requestid": str(request_id),
+                    "command": command,
+                    "account": str(self._account_id),
+                    "source": str(self._streamer_appid),
+                    "parameters": {
+                        "keys": str(self._streamer_key),
+                        "fields": "0,1,2,3"
+                    }
+                }
+            ]
+        }
+
+        async with self._lock:
+            await self.send(request)
+            response = await self.await_response(request_id, service, command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Account Activity Subscription SUCCESS. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Account Activity Subscription FAILED. Response: {response}")
+
+    async def account_activity_unsub(self):
+        """
+        Unsubscribe to account activity
+        """
+        service = "ACCT_ACTIVITY"
+        command = "UNSUBS"
+
+        _request, request_id = self._make_request(service=service, command=command, params={})
+
+        request = {
+            "requests": [
+                {
+                    "service": service,
+                    "requestid": str(request_id),
+                    "command": command,
+                    "account": str(self._account_id),
+                    "source": str(self._streamer_appid),
+                    "parameters": {
+                        "keys": str(self._streamer_key),
+                        "fields": "0,1,2,3"
+                    }
+                }
+            ]
+        }
+
+        async with self._lock:
+            await self.send(request)
+            response = await self.await_response(request_id, service, command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Account Activity Unsubscription SUCCESS. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Account Activity Unsubscription FAILED. Response: {response}")
+
+    def add_account_activity_handler(self, handler: callable):
+        self.handlers["ACCT_ACTIVITY"].append(Handler(handler, Fields.account_activity_fields))
+
+    def remove_account_activity_handler(self, handler: callable):
+        self.handlers["ACCT_ACTIVITY"].remove(Handler(handler, Fields.account_activity_fields))
+
+    ####################################################################################################################
+    # Level One
+    # QUOTE
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # OPTION
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # LEVELONE_FUTURES
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # LEVELONE_FUTURES_OPTIONS
+
+    ####################################################################################################################
+
+    # Level 2 Book
+    # LISTED_BOOK
     async def level_two_listed_sub(self, symbols: str | list):
         """
         Subscribe to Level 2 NYSE, AMEX Symbols
@@ -404,9 +495,9 @@ class StreamClient:
                                               command=command,
                                               fields=3)
         if response.get("code") == 0:
-            self.logger.info(f" L2 Subscription success. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L2 Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"Subscription failed. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L2 Subscription FAILED. Symbols: {symbols}. Response: {response}")
 
     async def level_two_listed_unsub(self, symbols: str | list):
         # Convert symbols to list if str
@@ -417,12 +508,48 @@ class StreamClient:
                                               service="LISTED_BOOK",
                                               command="UNSUBS")
         if response.get("code") == 0:
-            self.logger.info(f" L2 Unsubscription success. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L2 Unsubscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"Unsubscription failed. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L2 Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
 
     def add_level_two_listed_handler(self, handler: callable):
         self.handlers["LISTED_BOOK"].append(Handler(handler, Fields.level_two_fields))
 
     def remove_level_two_listed_handler(self, handler: callable):
         self.handlers["LISTED_BOOK"].remove(Handler(handler, Fields.level_two_fields))
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # NASDAQ_BOOK
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # OPTIONS_BOOK
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # FUTURES_BOOK
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # FUTURES_OPTIONS_BOOK
+
+    ####################################################################################################################
+
+    # TimeSale
+    # TIMESALE_EQUITY
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # TIMESALE_OPTIONS
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # TIMESALE_FUTURES
+
+    ####################################################################################################################
+
+    # News
+    # NEWS_HEADLINE
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # NEWS_STORY
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # NEWS_HEADLINE_LIST
+
+    ####################################################################################################################
