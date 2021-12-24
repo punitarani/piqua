@@ -1,6 +1,7 @@
 # TDA Stream Client
 
 import asyncio
+import copy
 import json
 from datetime import datetime
 from urllib.parse import urlencode
@@ -16,10 +17,34 @@ from ..logger import TDALogger
 client_socket = {}
 
 
+class Handler:
+    """
+    Basic Stream Handler
+    """
+
+    def __init__(self, func, fields):
+        self.func = func
+        self.fields = fields
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def label_message(self, msg):
+        if 'content' in msg:
+            new_msg = copy.deepcopy(msg)
+            for idx in range(len(msg['content'])):
+                self.fields.relabel_message(msg['content'][idx],
+                                            new_msg['content'][idx])
+            return new_msg
+        else:
+            return msg
+
+
 class StreamClient:
     """
     TDA Websocket Stream Client
     """
+
     def __init__(self):
         """
         Initialize Stream Client
@@ -36,7 +61,6 @@ class StreamClient:
         self._streamer_key = self.userPrincipals.loc["streamerSubscriptionKeys.keys"][0]['key']
         self._streamer_appid = self.userPrincipals.loc["streamerInfo.appId"]
         self._token = self.userPrincipals.loc["streamerInfo.token"]
-
 
         # Async Variables
         self._lock = asyncio.Lock()
