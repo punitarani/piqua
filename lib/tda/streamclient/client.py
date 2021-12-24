@@ -5,8 +5,6 @@ import json
 from datetime import datetime
 from urllib.parse import urlencode
 
-from .services import Account, Book, LevelOne, ChartHistory, TimeSale, News, QOS
-
 import websockets
 from websockets.extensions.permessage_deflate import ClientPerMessageDeflateFactory
 
@@ -194,7 +192,7 @@ class StreamClient:
                               service: str,
                               command: str,
                               symbols: list,
-                              fields: int):
+                              fields: int = None):
 
         """
         Send service request to server
@@ -206,9 +204,12 @@ class StreamClient:
         """
 
         # Build params keys:    Comma seperated string of symbols
+        parameters = {'keys': ','.join(symbols)}
+
         # Build fields string:  Comma seperated string of ints upto fields
-        parameters = {'keys': ','.join(symbols),
-                      'fields': ','.join(map(str, range(0, fields + 1)))}
+        if fields is not None:
+            fields = ','.join(map(str, range(0, fields + 1)))
+            parameters.update({"fields": fields})
 
         # Build request
         request, request_id = self._make_request(
@@ -218,7 +219,9 @@ class StreamClient:
         # Send request
         async with self._lock:
             await self.send({'requests': [request]})
-            await self.await_response(request_id=request_id, service=service, command=command)
+            response = await self.await_response(request_id=request_id, service=service, command=command)
+
+        return response
 
     # Login after connecting
     async def login(self):
