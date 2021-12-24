@@ -2,7 +2,9 @@
 
 import asyncio
 import copy
+import inspect
 import json
+from collections import defaultdict
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -10,6 +12,7 @@ import websockets
 from websockets.extensions.permessage_deflate import ClientPerMessageDeflateFactory
 
 from config import account_id
+from .services import Fields
 from ..account import Account
 from ..logger import TDALogger
 
@@ -22,22 +25,59 @@ class Handler:
     Basic Stream Handler
     """
 
-    def __init__(self, func, fields):
+    def __init__(self, func: callable, fields: dict | Fields):
         self.func = func
-        self.fields = fields
+
+        if isinstance(fields, Fields):
+            self.fields = fields.value
+        else:
+            self.fields = fields
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-    def label_message(self, msg):
-        if 'content' in msg:
-            new_msg = copy.deepcopy(msg)
-            for idx in range(len(msg['content'])):
-                self.fields.relabel_message(msg['content'][idx],
-                                            new_msg['content'][idx])
-            return new_msg
-        else:
-            return msg
+    def label_message(self, msg: list | dict):
+        """
+        Label the message with the fields
+        :param msg: Stream Message
+        :return:
+        """
+
+        """
+        Example msg:
+        [{"service":"LISTED_BOOK", "timestamp":1640371904385,"command":"SUBS",
+        "content":[{"key":"SPY","1":1640307600996,"2":[],"3":[]},{"key":"IWM","1":1640307600959,"2":[],"3":[]}]}]
+        """
+
+        msg = copy.deepcopy(msg)
+
+        if isinstance(msg, dict):
+            msg = [msg]
+
+        output = {}
+
+        for data in msg:
+            service = data.get("service")
+            if 'content' in data:
+                output_msg = {}
+
+                for content in data.get("content"):
+                    content_msg = {}
+
+                    for field in content:
+                        if field in self.fields.keys():
+                            content_msg.update({self.fields.get(field): content.get(field)})
+
+                        else:
+                            content_msg.update({field: content.get(field)})
+
+                    output_msg.update({content.get("key"): content_msg})
+                output.update({service: output_msg})
+
+            else:
+                return output.update({service: data})
+
+        return output
 
 
 class StreamClient:
@@ -61,6 +101,9 @@ class StreamClient:
         self._streamer_key = self.userPrincipals.loc["streamerSubscriptionKeys.keys"][0]['key']
         self._streamer_appid = self.userPrincipals.loc["streamerInfo.appId"]
         self._token = self.userPrincipals.loc["streamerInfo.token"]
+
+        # Stream Handlers
+        self.handlers = defaultdict(list)
 
         # Async Variables
         self._lock = asyncio.Lock()
@@ -213,6 +256,28 @@ class StreamClient:
                     self._logged_in = False
                     return True
 
+    async def handle_message(self):
+        async with self._lock:
+            msg = await self.receive()
+
+        # Parse response string to json dict
+        msg = json.loads(msg)
+
+        if "data" in msg.keys():
+            for data in msg.get("data"):
+                if data.get("service") in self.handlers.keys():
+
+                    for handler in self.handlers.get(data.get("service")):
+                        # Label Message
+                        data = handler.label_message(data)
+
+                        # Handle Message
+                        h = handler(data)
+
+                        # Schedule Message if awaitable
+                        if inspect.isawaitable(h):
+                            asyncio.ensure_future(h)
+
     async def service_request(self,
                               service: str,
                               command: str,
@@ -355,3 +420,9 @@ class StreamClient:
             self.logger.info(f" L2 Unsubscription success. Symbols: {symbols}. msg: {response.get('msg')}")
         else:
             self.logger.error(f"Unsubscription failed. Symbols: {symbols}. Response: {response}")
+
+    def add_level_two_listed_handler(self, handler: callable):
+        self.handlers["LISTED_BOOK"].append(Handler(handler, Fields.level_two_fields))
+
+    def remove_level_two_listed_handler(self, handler: callable):
+        self.handlers["LISTED_BOOK"].remove(Handler(handler, Fields.level_two_fields))
