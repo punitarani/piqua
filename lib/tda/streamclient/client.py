@@ -17,10 +17,12 @@ client_socket = {}
 
 
 class StreamClient:
+    """
+    TDA Websocket Stream Client
+    """
     def __init__(self):
         """
         Initialize Stream Client
-        :param login: Connect and Login to server when initialized
         """
         self.logger = TDALogger(logger_name="StreamClient").logger
 
@@ -35,7 +37,6 @@ class StreamClient:
         self._streamer_appid = self.userPrincipals.loc["streamerInfo.appId"]
         self._token = self.userPrincipals.loc["streamerInfo.token"]
 
-        self._ssl_context = 'ssl_context'
 
         # Async Variables
         self._lock = asyncio.Lock()
@@ -293,3 +294,40 @@ class StreamClient:
             self.logger.info(f"Login successful. msg: {response.get('msg')}")
         else:
             self.logger.error(f"Login failed. Response: {response}")
+
+    ####################################################################################################################
+
+    async def level_two_listed_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 NYSE, AMEX Symbols
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+        service = "LISTED_BOOK"
+        command = "SUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=3)
+        if response.get("code") == 0:
+            self.logger.info(f" L2 Subscription success. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Subscription failed. Symbols: {symbols}. Response: {response}")
+
+    async def level_two_listed_unsub(self, symbols: str | list):
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service="LISTED_BOOK",
+                                              command="UNSUBS")
+        if response.get("code") == 0:
+            self.logger.info(f" L2 Unsubscription success. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Unsubscription failed. Symbols: {symbols}. Response: {response}")
