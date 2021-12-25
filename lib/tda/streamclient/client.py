@@ -173,7 +173,6 @@ class StreamClient:
         """
 
         msg = await self.Socket.recv()
-        # print(msg)
         return msg
 
     def _make_request(self,
@@ -230,33 +229,10 @@ class StreamClient:
                             self.logger.warning(f"Received unexpected response: {response}")
                             return False
 
-    async def handle_socket_disconnect(self) -> bool | None:
+    async def handle_message(self):
         """
         Handle message from server
-        :return: None
         """
-
-        # Await response
-        messages = await self.receive()
-
-        # Parse response string to json dict
-        messages = json.loads(messages)
-
-        if "notify" in messages.keys():
-            for notify in messages.get("notify"):
-
-                # Stream is Alive
-                if "heartbeat" in notify.keys():
-                    self.logger.debug(f"Socket is Alive. Received heartbeat: {notify.get('heartbeat')}")
-
-                # Stream is Stopped
-                elif notify.get("service") == "ADMIN":
-                    self.logger.warning(f"Socket closed by TDA API. msg: {notify.get('content')}")
-                    await self.disconnect()
-                    self._logged_in = False
-                    return True
-
-    async def handle_message(self):
         async with self._lock:
             msg = await self.receive()
 
@@ -267,6 +243,31 @@ class StreamClient:
             for data in msg.get("data"):
                 if data.get("service") in self.handlers.keys():
 
+                    for handler in self.handlers.get(data.get("service")):
+                        # Label Message
+                        data = handler.label_message(data)
+
+                        # Handle Message
+                        h = handler(data)
+
+                        # Schedule Message if awaitable
+                        if inspect.isawaitable(h):
+                            asyncio.ensure_future(h)
+
+        if "notify" in msg.keys():
+            for data in msg.get("notify"):
+
+                # Stream is Alive
+                if "heartbeat" in data.keys():
+                    self.logger.debug(f"Socket is Alive. Received heartbeat: {data.get('heartbeat')}")
+
+                # Stream is Stopped
+                elif data.get("service") == "ADMIN":
+                    self.logger.warning(f"Socket closed by TDA API. msg: {data.get('content')}")
+                    await self.disconnect()
+                    self._logged_in = False
+
+                else:
                     for handler in self.handlers.get(data.get("service")):
                         # Label Message
                         data = handler.label_message(data)
@@ -323,7 +324,7 @@ class StreamClient:
         self._logged_in = True
 
         # Connect to ws server
-        socket = await self.connect()
+        await self.connect()
 
         # Build login request params
         timestamp = int(datetime.strptime(
@@ -489,15 +490,178 @@ class StreamClient:
     ####################################################################################################################
     # Level One
     # QUOTE
+    async def level_one_equity_sub(self, symbols: str | list):
+        service = "QUOTE"
+        command = "SUBS"
+        fields = 52
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"L1 Equity Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"L1 Equity Subscription FAILED. Symbols: {symbols}. Response: {response}")
+
+    async def level_one_equity_unsub(self, symbols: str | list):
+        service = "QUOTE"
+        command = "UNSUBS"
+        fields = 52
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"L1 Equity Unsubscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"L1 Equity Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
+
+    def add_level_one_equity_handler(self, handler: callable):
+        self.handlers["QUOTE"].append(Handler(handler, Fields.equity_fields))
+
+    def remove_level_one_equity_handler(self, handler: callable):
+        self.handlers["QUOTE"].remove(Handler(handler, Fields.equity_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # OPTION
+    async def level_one_options_sub(self, symbols: str | list):
+        service = "OPTION"
+        command = "SUBS"
+        fields = 41
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+        if response.get("code") == 0:
+            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+
+    async def level_one_options_unsub(self, symbols: str | list):
+        service = "OPTION"
+        command = "UNSUBS"
+        fields = 41
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+        if response.get("code") == 0:
+            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+
+    def add_level_one_option_handler(self, handler: callable):
+        self.handlers["OPTION"].append(Handler(handler, Fields.LevelOne.options_fields.value))
+
+    def remove_level_one_option_handler(self, handler: callable):
+        self.handlers["OPTION"].remove(Handler(handler, Fields.LevelOne.options_fields.value))
 
     # ------------------------------------------------------------------------------------------------------------------
     # LEVELONE_FUTURES
+    async def level_one_futures_sub(self, symbols: str | list):
+        service = "LEVELONE_FUTURES"
+        command = "SUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=3)
+        if response.get("code") == 0:
+            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+
+    async def level_one_futures_unsub(self, symbols: str | list):
+        service = "LEVELONE_FUTURES"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=3)
+        if response.get("code") == 0:
+            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+
+    def add_level_one_futures_handler(self, handler: callable):
+        self.handlers["LEVELONE_FUTURES"].append(Handler(handler, Fields.level_one_fields))
+
+    def remove_level_one_futures_handler(self, handler: callable):
+        self.handlers["LEVELONE_FUTURES"].remove(Handler(handler, Fields.level_one_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # LEVELONE_FUTURES_OPTIONS
+    async def level_one_futures_options_sub(self, symbols: str | list):
+        service = "LEVELONE_FUTURES_OPTIONS"
+        command = "SUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=3)
+        if response.get("code") == 0:
+            self.logger.info(f"L1 Futures Options Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"L1 Futures Options Subscription FAILED. Symbols: {symbols}. Response: {response}")
+
+    async def level_one_futures_options_unsub(self, symbols: str | list):
+        service = "LEVELONE_FUTURES_OPTIONS"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=3)
+        if response.get("code") == 0:
+            self.logger.info(f"L1 Futures Options Unsubscription SUCCESS. Symbols: {symbols}."
+                             f"msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"L1 Futures Options Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
+
+    def add_level_one_futures_options_handler(self, handler: callable):
+        self.handlers["LEVELONE_FUTURES_OPTIONS"].append(Handler(handler, Fields.level_one_fields))
+
+    def remove_level_one_futures_options_handler(self, handler: callable):
+        self.handlers["LEVELONE_FUTURES_OPTIONS"].remove(Handler(handler, Fields.level_one_fields))
 
     ####################################################################################################################
 
