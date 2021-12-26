@@ -80,6 +80,13 @@ class Handler:
         return output
 
 
+class BookHandler(Handler):
+    """
+    Handler class for Book Stream
+    """
+    # TODO: Add label_message function
+
+
 class StreamClient:
     """
     TDA Websocket Stream Client
@@ -505,14 +512,15 @@ class StreamClient:
                                               fields=fields)
 
         if response.get("code") == 0:
-            self.logger.info(f"L1 Equity Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Equity Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"L1 Equity Subscription FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Equity Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     async def level_one_equity_unsub(self, symbols: str | list):
         service = "QUOTE"
         command = "UNSUBS"
-        fields = 52
 
         # Convert symbols to list if str
         if isinstance(symbols, str):
@@ -520,13 +528,14 @@ class StreamClient:
 
         response = await self.service_request(symbols=symbols,
                                               service=service,
-                                              command=command,
-                                              fields=fields)
+                                              command=command)
 
         if response.get("code") == 0:
-            self.logger.info(f"L1 Equity Unsubscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Equity Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"L1 Equity Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Equity Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_equity_handler(self, handler: callable):
         self.handlers["QUOTE"].append(Handler(handler, Fields.equity_fields))
@@ -550,14 +559,15 @@ class StreamClient:
                                               command=command,
                                               fields=fields)
         if response.get("code") == 0:
-            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Options Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Options Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     async def level_one_options_unsub(self, symbols: str | list):
         service = "OPTION"
         command = "UNSUBS"
-        fields = 41
 
         # Convert symbols to list if str
         if isinstance(symbols, str):
@@ -565,12 +575,14 @@ class StreamClient:
 
         response = await self.service_request(symbols=symbols,
                                               service=service,
-                                              command=command,
-                                              fields=fields)
+                                              command=command)
+
         if response.get("code") == 0:
-            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Options Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Options Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_option_handler(self, handler: callable):
         self.handlers["OPTION"].append(Handler(handler, Fields.LevelOne.options_fields.value))
@@ -583,6 +595,7 @@ class StreamClient:
     async def level_one_futures_sub(self, symbols: str | list):
         service = "LEVELONE_FUTURES"
         command = "SUBS"
+        fields = 35
 
         # Convert symbols to list if str
         if isinstance(symbols, str):
@@ -591,11 +604,14 @@ class StreamClient:
         response = await self.service_request(symbols=symbols,
                                               service=service,
                                               command=command,
-                                              fields=3)
+                                              fields=fields)
+
         if response.get("code") == 0:
-            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Futures Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Futures SubscriptionFAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     async def level_one_futures_unsub(self, symbols: str | list):
         service = "LEVELONE_FUTURES"
@@ -607,12 +623,14 @@ class StreamClient:
 
         response = await self.service_request(symbols=symbols,
                                               service=service,
-                                              command=command,
-                                              fields=3)
+                                              command=command)
+
         if response.get("code") == 0:
-            self.logger.info(f"SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Futures Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Futures Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_futures_handler(self, handler: callable):
         self.handlers["LEVELONE_FUTURES"].append(Handler(handler, Fields.level_one_fields))
@@ -625,6 +643,7 @@ class StreamClient:
     async def level_one_futures_options_sub(self, symbols: str | list):
         service = "LEVELONE_FUTURES_OPTIONS"
         command = "SUBS"
+        fields = 35
 
         # Convert symbols to list if str
         if isinstance(symbols, str):
@@ -633,11 +652,14 @@ class StreamClient:
         response = await self.service_request(symbols=symbols,
                                               service=service,
                                               command=command,
-                                              fields=3)
+                                              fields=fields)
+
         if response.get("code") == 0:
-            self.logger.info(f"L1 Futures Options Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"L1 Futures Options Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"L1 Futures Options Subscription FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Futures Options Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     async def level_one_futures_options_unsub(self, symbols: str | list):
         service = "LEVELONE_FUTURES_OPTIONS"
@@ -649,13 +671,15 @@ class StreamClient:
 
         response = await self.service_request(symbols=symbols,
                                               service=service,
-                                              command=command,
-                                              fields=3)
+                                              command=command)
+
         if response.get("code") == 0:
-            self.logger.info(f"L1 Futures Options Unsubscription SUCCESS. Symbols: {symbols}."
+            self.logger.info(f"L1 Futures Options Unsubscription SUCCESS."
+                             f"Symbols: {symbols}."
                              f"msg: {response.get('msg')}")
         else:
-            self.logger.error(f"L1 Futures Options Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"L1 Futures Options Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_futures_options_handler(self, handler: callable):
         self.handlers["LEVELONE_FUTURES_OPTIONS"].append(Handler(handler, Fields.level_one_fields))
@@ -667,14 +691,15 @@ class StreamClient:
 
     # Level 2 Book
     # LISTED_BOOK
-    async def level_two_listed_sub(self, symbols: str | list):
+    async def listed_book_sub(self, symbols: str | list):
         """
-        Subscribe to Level 2 NYSE, AMEX Symbols
+        Subscribe to Level 2 NYSE, AMEX Stocks
         :param symbols: Symbol or list of symbols to Subscribe to
         :return: None
         """
         service = "LISTED_BOOK"
         command = "SUBS"
+        fields = 3
 
         # Convert symbols to list if str
         if isinstance(symbols, str):
@@ -683,42 +708,265 @@ class StreamClient:
         response = await self.service_request(symbols=symbols,
                                               service=service,
                                               command=command,
-                                              fields=3)
-        if response.get("code") == 0:
-            self.logger.info(f"L2 Subscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
-        else:
-            self.logger.error(f"L2 Subscription FAILED. Symbols: {symbols}. Response: {response}")
+                                              fields=fields)
 
-    async def level_two_listed_unsub(self, symbols: str | list):
+        if response.get("code") == 0:
+            self.logger.info(f"Listed Book Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Listed Book Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def listed_book_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 NYSE, AMEX Stocks
+        :param symbols: Symbol or list of symbols to Unsubscribe to
+        :return: None
+        """
+
+        service = "LISTED_BOOK"
+        command = "UNSUBS"
+
         # Convert symbols to list if str
         if isinstance(symbols, str):
             symbols = [symbols]
 
         response = await self.service_request(symbols=symbols,
-                                              service="LISTED_BOOK",
-                                              command="UNSUBS")
+                                              service=service,
+                                              command=command)
+
         if response.get("code") == 0:
-            self.logger.info(f"L2 Unsubscription SUCCESS. Symbols: {symbols}. msg: {response.get('msg')}")
+            self.logger.info(f"Listed Book Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
         else:
-            self.logger.error(f"L2 Unsubscription FAILED. Symbols: {symbols}. Response: {response}")
+            self.logger.error(f"Listed Book Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
 
-    def add_level_two_listed_handler(self, handler: callable):
-        self.handlers["LISTED_BOOK"].append(Handler(handler, Fields.level_two_fields))
+    def add_listed_book_handler(self, handler: callable):
+        self.handlers["LISTED_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
 
-    def remove_level_two_listed_handler(self, handler: callable):
-        self.handlers["LISTED_BOOK"].remove(Handler(handler, Fields.level_two_fields))
+    def remove_listed_book_handler(self, handler: callable):
+        self.handlers["LISTED_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # NASDAQ_BOOK
+    async def nasdaq_book_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 NASDAQ Stocks
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+        service = "NASDAQ_BOOK"
+        command = "SUBS"
+        fields = 3
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"NASDAQ Book Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"NASDAQ Book Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def nasdaq_book_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 NASDAQ Stocks
+        :param symbols: Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
+
+        service = "NASDAQ_BOOK"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"NASDAQ Book Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"NASDAQ Book Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_nasdaq_book_handler(self, handler: callable):
+        self.handlers["NASDAQ_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+
+    def remove_nasdaq_book_handler(self, handler: callable):
+        self.handlers["NASDAQ_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # OPTIONS_BOOK
+    async def options_book_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 Equity Options
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+        service = "OPTIONS_BOOK"
+        command = "SUBS"
+        fields = 3
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Options Book Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Options Book Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def options_book_unsub(self, symbols: str | list):
+        """
+        Unsubscribe from Level 2 Equity Options
+        :param symbols: Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
+        service = "OPTIONS_BOOK"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+        if response.get("code") == 0:
+            self.logger.info(f"Options Book Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Options Book Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_options_book_handler(self, handler: callable):
+        self.handlers["OPTIONS_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+
+    def remove_options_book_handler(self, handler: callable):
+        self.handlers["OPTIONS_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # FUTURES_BOOK
+    async def futures_book_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 Equity Options
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+        service = "FUTURES_BOOK"
+        command = "SUBS"
+        fields = 3
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+        if response.get("code") == 0:
+            self.logger.info(f"Futures Book Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures Book Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def futures_book_unsub(self, symbols: str | list):
+
+        service = "FUTURES_BOOK"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+        if response.get("code") == 0:
+            self.logger.info(f"Futures Book Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures Book Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_futures_book_handler(self, handler: callable):
+        self.handlers["FUTURES_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+
+    def remove_futures_book_handler(self, handler: callable):
+        self.handlers["FUTURES_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
 
     # ------------------------------------------------------------------------------------------------------------------
     # FUTURES_OPTIONS_BOOK
+    async def futures_options_book_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 Equity Options
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+        service = "FUTURES_OPTIONS_BOOK"
+        command = "SUBS"
+        fields = 3
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+        if response.get("code") == 0:
+            self.logger.info(f"Futures Options Book Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures Options Book Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def futures_options_book_unsub(self, symbols: str | list):
+
+        service = "FUTURES_BOOK"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+        if response.get("code") == 0:
+            self.logger.info(f"Futures Options Book Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures Options Book Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_futures_options_book_handler(self, handler: callable):
+        self.handlers["FUTURES_OPTIONS_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+
+    def remove_futures_options_book_handler(self, handler: callable):
+        self.handlers["FUTURES_OPTIONS_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
 
     ####################################################################################################################
 
