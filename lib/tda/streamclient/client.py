@@ -196,6 +196,54 @@ class BookHandler(Handler):
 class StreamClient:
     """
     TDA Websocket Stream Client
+
+    Endpoints:
+        Account:
+            Activity
+
+            Quality of Service
+
+
+
+        Level One:
+            Equity
+
+            Equity Options
+
+            Futures
+
+            Futures Options (DOES NOT WORK)
+
+
+        Book (L2):
+            Equity
+
+            Equity Options
+
+            Futures (DOWN)
+
+            Futures Options (DOES NOT WORK)
+
+
+        TimeSale:
+            Equity
+
+            Equity Options (DOES NOT WORK)
+
+            Futures
+
+
+        News:
+            Headline
+
+    Application:
+        1. Initialize StreamClient(): Login
+        2. Add/Remove Services and Handlers:
+            1. Services: Subscribe to TDA relevant services to get data
+
+            2. Handlers: Add application relevant handlers to manipulate data
+        3. Close Socket: Logout -> Disconnect(Optional)
+
     """
 
     def __init__(self):
