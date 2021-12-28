@@ -84,9 +84,116 @@ class BookHandler(Handler):
     """
     Handler class for Book Stream
     """
-    # TODO: Add label_message function
 
+    def label_message(self, msg: list | dict):
+        """
+        Label the message with the fields
+        :param msg: Stream Message
+        :return:
+        """
 
+        # Relabel top-level fields
+        msg = super().label_message(msg).copy()
+
+        """
+        Output Examples:
+        msg
+        {'LISTED_BOOK': {'SPY': {'key': 'SPY', 'BOOK_TIME': 1640653200830, 'BIDS': [{'0': 476.91, '1': 700, '2': 2, 
+        '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}], 'ASKS': [{'0': 
+        476.98, '1': 500, '2': 1, '3': [{'0': 'ARCX', '1': 500, '2': 68391101}]}, {'0': 476.99, '1': 200, '2': 1, 
+        '3': [{'0': 'CINN', '1': 200, '2': 68400012}]}]}, 'BABA': {'key': 'BABA', 'BOOK_TIME': 1640653200830, 
+        'BIDS': [{'0': 116.66, '1': 400, '2': 1, '3': [{'0': 'ARCX', '1': 400, '2': 68169737}]}, {'0': 116.5, 
+        '1': 200, '2': 1, '3': [{'0': 'AMEX', '1': 200, '2': 67643382}]}], 'ASKS': [{'0': 116.95, '1': 200, '2': 1, 
+        '3': [{'0': 'ARCX', '1': 200, '2': 68390430}]}, {'0': 117.1, '1': 100, '2': 1, '3': [{'0': 'AMEX', '1': 100, 
+        '2': 66007842}]}]}}}
+        
+        data
+        {'SPY': {'key': 'SPY', 'BOOK_TIME': 1640653200830, 'BIDS': [{'0': 476.91, '1': 700, '2': 2, 
+        '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}], 'ASKS': [{'0': 
+        476.98, '1': 500, '2': 1, '3': [{'0': 'ARCX', '1': 500, '2': 68391101}]}, {'0': 476.99, '1': 200, '2': 1, 
+        '3': [{'0': 'CINN', '1': 200, '2': 68400012}]}]}, 'BABA': {'key': 'BABA', 'BOOK_TIME': 1640653200830, 
+        'BIDS': [{'0': 116.66, '1': 400, '2': 1, '3': [{'0': 'ARCX', '1': 400, '2': 68169737}]}, {'0': 116.5, 
+        '1': 200, '2': 1, '3': [{'0': 'AMEX', '1': 200, '2': 67643382}]}], 'ASKS': [{'0': 116.95, '1': 200, '2': 1, 
+        '3': [{'0': 'ARCX', '1': 200, '2': 68390430}]}, {'0': 117.1, '1': 100, '2': 1, '3': [{'0': 'AMEX', '1': 100, 
+        '2': 66007842}]}]}}
+        
+        bid_ask_data
+        {'key': 'SPY', 'BOOK_TIME': 1640653200830, 'BIDS': [{'0': 476.91, '1': 700, '2': 2, 
+        '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}], 'ASKS': [{'0': 
+        476.98, '1': 500, '2': 1, '3': [{'0': 'ARCX', '1': 500, '2': 68391101}]}, {'0': 476.99, '1': 200, '2': 1, 
+        '3': [{'0': 'CINN', '1': 200, '2': 68400012}]}]}
+        
+        Bids/Asks
+        [{'0': 476.91, '1': 700, '2': 2, '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}]
+        """
+
+        services = list(set(msg.keys()))
+
+        if len(services) > 1:
+            logger = StreamClient().logger
+            logger.error(f"Found more than one service in msg: {msg}")
+            logger.info(f"Continuing with the first service: {services[0]}")
+
+        service = services[0]
+
+        exchange_fields = Fields.book_exchange.value
+        bids_asks = ["bids", "Asks"]
+
+        data = msg.get(service)
+        tickers = data.keys()
+
+        new_data = {}
+
+        # Ticker
+        for ticker in tickers:
+            ticker_data = data.get(ticker)
+            ticker_data_keys = ticker_data.keys()
+            new_ticker_data = {}
+
+            # Bid/Ask
+            for bid_ask in bids_asks:
+                if bid_ask in ticker_data_keys:
+                    new_bid_data = []
+
+                    for bid_ask_data in ticker_data.get(bid_ask):
+                        new_bid_ask = {}
+
+                        # Update first level fields
+                        for field in bid_ask_data.keys():
+
+                            # Update exchange field keys
+                            if field == "3":
+                                bid_ask_exchange = []
+
+                                for exchange in bid_ask_data.get("3"):
+                                    exchange_msg = {}
+
+                                    for e_fields in exchange.keys():
+                                        if e_fields in exchange_fields.keys():
+                                            exchange_msg.update(
+                                                {exchange_fields.get(e_fields): exchange.get(e_fields)})
+                                        else:
+                                            exchange_msg.update({e_fields: exchange.get(e_fields)})
+
+                                    bid_ask_exchange.append(exchange_msg)
+
+                                new_bid_ask.update({self.fields.get(field): bid_ask_exchange})
+
+                            # Update other fields
+                            elif field in self.fields.keys():
+                                new_bid_ask.update({self.fields.get(field): bid_ask_data.get(field)})
+                            else:
+                                new_bid_ask.update({field: bid_ask_data.get(field)})
+
+                        new_bid_data.append(new_bid_ask)
+
+                    new_ticker_data.update({ticker: new_bid_data})
+
+            new_data.update({ticker: new_ticker_data})
+
+        return {service: new_data}
+
+# TODO: Fix Handler and BookHandler implementation
 class StreamClient:
     """
     TDA Websocket Stream Client
@@ -726,7 +833,7 @@ class StreamClient:
         :param symbols: Symbol or list of symbols to Subscribe to
         :return: None
         """
-        
+
         service = "LISTED_BOOK"
         command = "SUBS"
         fields = 3
