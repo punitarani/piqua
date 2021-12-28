@@ -27,11 +27,7 @@ class Handler:
 
     def __init__(self, func: callable, fields: dict | Fields):
         self.func = func
-
-        if isinstance(fields, Fields):
-            self.fields = fields.value
-        else:
-            self.fields = fields
+        self.fields = fields
 
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
