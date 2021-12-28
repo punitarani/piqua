@@ -193,7 +193,7 @@ class BookHandler(Handler):
 
         return {service: new_data}
 
-# TODO: Fix Handler and BookHandler implementation
+
 class StreamClient:
     """
     TDA Websocket Stream Client
@@ -1181,10 +1181,10 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_timesale_equity_handler(self, handler: callable):
-        self.handlers["TIMESALE_EQUITY"].append(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_EQUITY"].append(Handler(handler, Fields.timesale))
 
     def remove_timesale_equity_handler(self, handler: callable):
-        self.handlers["TIMESALE_EQUITY"].remove(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_EQUITY"].remove(Handler(handler, Fields.timesale))
 
     # ------------------------------------------------------------------------------------------------------------------
     # TIMESALE_OPTIONS
@@ -1241,10 +1241,10 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_timesale_options_handler(self, handler: callable):
-        self.handlers["TIMESALE_OPTIONS"].append(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_OPTIONS"].append(Handler(handler, Fields.timesale))
 
     def remove_timesale_options_handler(self, handler: callable):
-        self.handlers["TIMESALE_OPTIONS"].remove(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_OPTIONS"].remove(Handler(handler, Fields.timesale))
 
     # ------------------------------------------------------------------------------------------------------------------
     # TIMESALE_FUTURES
@@ -1301,10 +1301,10 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_timesale_futures_handler(self, handler: callable):
-        self.handlers["TIMESALE_FUTURES"].append(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_FUTURES"].append(Handler(handler, Fields.timesale))
 
     def remove_timesale_futures_handler(self, handler: callable):
-        self.handlers["TIMESALE_FUTURES"].remove(BookHandler(handler, Fields.timesale))
+        self.handlers["TIMESALE_FUTURES"].remove(Handler(handler, Fields.timesale))
 
     ####################################################################################################################
 
@@ -1359,9 +1359,9 @@ class StreamClient:
             self.logger.error(f"News Headline Unsubscription FAILED. Response: {response}")
 
     def add_news_headline_handler(self, handler: callable):
-        self.handlers["NEWS_HEADLINE"].append(BookHandler(handler, Fields.news_headline))
+        self.handlers["NEWS_HEADLINE"].append(Handler(handler, Fields.news_headline))
 
     def remove_news_headline_handler(self, handler: callable):
-        self.handlers["NEWS_HEADLINE"].remove(BookHandler(handler, Fields.news_headline))
+        self.handlers["NEWS_HEADLINE"].remove(Handler(handler, Fields.news_headline))
 
     ####################################################################################################################
