@@ -489,15 +489,21 @@ class StreamClient:
             self.logger.error(f"Account Activity Unsubscription FAILED. Response: {response}")
 
     def add_account_activity_handler(self, handler: callable):
-        self.handlers["ACCT_ACTIVITY"].append(Handler(handler, Fields.account_activity_fields))
+        self.handlers["ACCT_ACTIVITY"].append(Handler(handler, Fields.account_activity))
 
     def remove_account_activity_handler(self, handler: callable):
-        self.handlers["ACCT_ACTIVITY"].remove(Handler(handler, Fields.account_activity_fields))
+        self.handlers["ACCT_ACTIVITY"].remove(Handler(handler, Fields.account_activity))
 
     ####################################################################################################################
     # Level One
     # QUOTE
     async def level_one_equity_sub(self, symbols: str | list):
+        """
+        Subscribe to Level One Equity Quote
+        :param symbols: Symbol or list of symbols to subscribe to
+        :return: None
+        """
+
         service = "QUOTE"
         command = "SUBS"
         fields = 52
@@ -519,6 +525,12 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     async def level_one_equity_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to level one equity
+        :param symbols: Symbol or list of symbols
+        :return: None
+        """
+
         service = "QUOTE"
         command = "UNSUBS"
 
@@ -538,14 +550,19 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_equity_handler(self, handler: callable):
-        self.handlers["QUOTE"].append(Handler(handler, Fields.equity_fields))
+        self.handlers["QUOTE"].append(Handler(handler, Fields.level_one_equity))
 
     def remove_level_one_equity_handler(self, handler: callable):
-        self.handlers["QUOTE"].remove(Handler(handler, Fields.equity_fields))
+        self.handlers["QUOTE"].remove(Handler(handler, Fields.level_one_equity))
 
     # ------------------------------------------------------------------------------------------------------------------
     # OPTION
     async def level_one_options_sub(self, symbols: str | list):
+        """
+        Subscribe to Level One Options
+        :param symbols: Symbol or list of symbols to subscribe to
+        :return: None
+        """
         service = "OPTION"
         command = "SUBS"
         fields = 41
@@ -558,6 +575,7 @@ class StreamClient:
                                               service=service,
                                               command=command,
                                               fields=fields)
+
         if response.get("code") == 0:
             self.logger.info(f"L1 Options Subscription SUCCESS."
                              f"Symbols: {symbols}. msg: {response.get('msg')}")
@@ -585,14 +603,19 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_option_handler(self, handler: callable):
-        self.handlers["OPTION"].append(Handler(handler, Fields.LevelOne.options_fields.value))
+        self.handlers["OPTION"].append(Handler(handler, Fields.level_one_options))
 
     def remove_level_one_option_handler(self, handler: callable):
-        self.handlers["OPTION"].remove(Handler(handler, Fields.LevelOne.options_fields.value))
+        self.handlers["OPTION"].remove(Handler(handler, Fields.level_one_options))
 
     # ------------------------------------------------------------------------------------------------------------------
     # LEVELONE_FUTURES
     async def level_one_futures_sub(self, symbols: str | list):
+        """
+        Subscribe to Level One Futures data.
+        :param symbols: Symbol or list of symbols to subscribe to.
+        :return: None
+        """
         service = "LEVELONE_FUTURES"
         command = "SUBS"
         fields = 35
@@ -633,14 +656,20 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_futures_handler(self, handler: callable):
-        self.handlers["LEVELONE_FUTURES"].append(Handler(handler, Fields.level_one_fields))
+        self.handlers["LEVELONE_FUTURES"].append(Handler(handler, Fields.level_one_futures))
 
     def remove_level_one_futures_handler(self, handler: callable):
-        self.handlers["LEVELONE_FUTURES"].remove(Handler(handler, Fields.level_one_fields))
+        self.handlers["LEVELONE_FUTURES"].remove(Handler(handler, Fields.level_one_futures))
 
     # ------------------------------------------------------------------------------------------------------------------
     # LEVELONE_FUTURES_OPTIONS
     async def level_one_futures_options_sub(self, symbols: str | list):
+        """
+        Subscribe to Level One Futures Options
+        :param symbols: Symbols or list of symbols to subscribe to
+        :return: None
+        """
+
         service = "LEVELONE_FUTURES_OPTIONS"
         command = "SUBS"
         fields = 35
@@ -682,10 +711,10 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_level_one_futures_options_handler(self, handler: callable):
-        self.handlers["LEVELONE_FUTURES_OPTIONS"].append(Handler(handler, Fields.level_one_fields))
+        self.handlers["LEVELONE_FUTURES_OPTIONS"].append(Handler(handler, Fields.level_one_futures))
 
     def remove_level_one_futures_options_handler(self, handler: callable):
-        self.handlers["LEVELONE_FUTURES_OPTIONS"].remove(Handler(handler, Fields.level_one_fields))
+        self.handlers["LEVELONE_FUTURES_OPTIONS"].remove(Handler(handler, Fields.level_one_futures))
 
     ####################################################################################################################
 
@@ -697,6 +726,7 @@ class StreamClient:
         :param symbols: Symbol or list of symbols to Subscribe to
         :return: None
         """
+        
         service = "LISTED_BOOK"
         command = "SUBS"
         fields = 3
@@ -743,10 +773,10 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_listed_book_handler(self, handler: callable):
-        self.handlers["LISTED_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["LISTED_BOOK"].append(BookHandler(handler, Fields.book))
 
     def remove_listed_book_handler(self, handler: callable):
-        self.handlers["LISTED_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["LISTED_BOOK"].remove(BookHandler(handler, Fields.book))
 
     # ------------------------------------------------------------------------------------------------------------------
     # NASDAQ_BOOK
@@ -756,6 +786,7 @@ class StreamClient:
         :param symbols: Symbol or list of symbols to Subscribe to
         :return: None
         """
+
         service = "NASDAQ_BOOK"
         command = "SUBS"
         fields = 3
@@ -802,19 +833,20 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_nasdaq_book_handler(self, handler: callable):
-        self.handlers["NASDAQ_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["NASDAQ_BOOK"].append(BookHandler(handler, Fields.book))
 
     def remove_nasdaq_book_handler(self, handler: callable):
-        self.handlers["NASDAQ_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["NASDAQ_BOOK"].remove(BookHandler(handler, Fields.book))
 
     # ------------------------------------------------------------------------------------------------------------------
     # OPTIONS_BOOK
     async def options_book_sub(self, symbols: str | list):
         """
         Subscribe to Level 2 Equity Options
-        :param symbols: Symbol or list of symbols to Subscribe to
+        :param symbols: Options Symbol or list of symbols to Subscribe to
         :return: None
         """
+
         service = "OPTIONS_BOOK"
         command = "SUBS"
         fields = 3
@@ -838,9 +870,10 @@ class StreamClient:
     async def options_book_unsub(self, symbols: str | list):
         """
         Unsubscribe from Level 2 Equity Options
-        :param symbols: Symbol or list of symbols to Unsubscribe from
+        :param symbols: Equity Options Symbol or list of symbols to Unsubscribe from
         :return: None
         """
+
         service = "OPTIONS_BOOK"
         command = "UNSUBS"
 
@@ -859,19 +892,20 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_options_book_handler(self, handler: callable):
-        self.handlers["OPTIONS_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["OPTIONS_BOOK"].append(BookHandler(handler, Fields.book))
 
     def remove_options_book_handler(self, handler: callable):
-        self.handlers["OPTIONS_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["OPTIONS_BOOK"].remove(BookHandler(handler, Fields.book))
 
     # ------------------------------------------------------------------------------------------------------------------
     # FUTURES_BOOK
     async def futures_book_sub(self, symbols: str | list):
         """
-        Subscribe to Level 2 Equity Options
-        :param symbols: Symbol or list of symbols to Subscribe to
+        Subscribe to Level 2 Futures
+        :param symbols: Futures Symbol or list of symbols to Subscribe to
         :return: None
         """
+
         service = "FUTURES_BOOK"
         command = "SUBS"
         fields = 3
@@ -884,6 +918,7 @@ class StreamClient:
                                               service=service,
                                               command=command,
                                               fields=fields)
+
         if response.get("code") == 0:
             self.logger.info(f"Futures Book Subscription SUCCESS."
                              f"Symbols: {symbols}. msg: {response.get('msg')}")
@@ -892,6 +927,11 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     async def futures_book_unsub(self, symbols: str | list):
+        """
+        Unsubscribe from Level 2 Futures
+        :param symbols: Futures Symbol or list of symbols to Unsubscribe from
+        :return:
+        """
 
         service = "FUTURES_BOOK"
         command = "UNSUBS"
@@ -903,6 +943,7 @@ class StreamClient:
         response = await self.service_request(symbols=symbols,
                                               service=service,
                                               command=command)
+
         if response.get("code") == 0:
             self.logger.info(f"Futures Book Unsubscription SUCCESS."
                              f"Symbols: {symbols}. msg: {response.get('msg')}")
@@ -911,19 +952,20 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_futures_book_handler(self, handler: callable):
-        self.handlers["FUTURES_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["FUTURES_BOOK"].append(BookHandler(handler, Fields.book))
 
     def remove_futures_book_handler(self, handler: callable):
-        self.handlers["FUTURES_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["FUTURES_BOOK"].remove(BookHandler(handler, Fields.book))
 
     # ------------------------------------------------------------------------------------------------------------------
     # FUTURES_OPTIONS_BOOK
     async def futures_options_book_sub(self, symbols: str | list):
         """
         Subscribe to Level 2 Equity Options
-        :param symbols: Symbol or list of symbols to Subscribe to
+        :param symbols: Equity Options Symbol or list of symbols to Subscribe to
         :return: None
         """
+
         service = "FUTURES_OPTIONS_BOOK"
         command = "SUBS"
         fields = 3
@@ -936,6 +978,7 @@ class StreamClient:
                                               service=service,
                                               command=command,
                                               fields=fields)
+
         if response.get("code") == 0:
             self.logger.info(f"Futures Options Book Subscription SUCCESS."
                              f"Symbols: {symbols}. msg: {response.get('msg')}")
@@ -944,6 +987,11 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     async def futures_options_book_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 Equity Options
+        :param symbols: Equity Options Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
 
         service = "FUTURES_BOOK"
         command = "UNSUBS"
@@ -955,6 +1003,7 @@ class StreamClient:
         response = await self.service_request(symbols=symbols,
                                               service=service,
                                               command=command)
+
         if response.get("code") == 0:
             self.logger.info(f"Futures Options Book Unsubscription SUCCESS."
                              f"Symbols: {symbols}. msg: {response.get('msg')}")
@@ -963,21 +1012,192 @@ class StreamClient:
                               f"Symbols: {symbols}. Response: {response}")
 
     def add_futures_options_book_handler(self, handler: callable):
-        self.handlers["FUTURES_OPTIONS_BOOK"].append(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["FUTURES_OPTIONS_BOOK"].append(BookHandler(handler, Fields.book))
 
     def remove_futures_options_book_handler(self, handler: callable):
-        self.handlers["FUTURES_OPTIONS_BOOK"].remove(BookHandler(handler, Fields.level_two_fields))
+        self.handlers["FUTURES_OPTIONS_BOOK"].remove(BookHandler(handler, Fields.book))
 
     ####################################################################################################################
 
     # TimeSale
     # TIMESALE_EQUITY
+    async def timesale_equity_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 Equity
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+
+        service = "TIMESALE_EQUITY"
+        command = "SUBS"
+        fields = 4
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Equity TimeSale Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Equity TimeSale Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def timesale_equity_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 Equity
+        :param symbols: Equity Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
+
+        service = "TIMESALE_EQUITY"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Equity TimeSale Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Equity TimeSale Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_timesale_equity_handler(self, handler: callable):
+        self.handlers["TIMESALE_EQUITY"].append(BookHandler(handler, Fields.timesale))
+
+    def remove_timesale_equity_handler(self, handler: callable):
+        self.handlers["TIMESALE_EQUITY"].remove(BookHandler(handler, Fields.timesale))
 
     # ------------------------------------------------------------------------------------------------------------------
     # TIMESALE_OPTIONS
+    async def timesale_options_sub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 Equity
+        :param symbols: Symbol or list of symbols to Unsubscribe to
+        :return: None
+        """
+
+        service = "TIMESALE_OPTIONS"
+        command = "SUBS"
+        fields = 4
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Options TimeSale Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Options TimeSale Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def timesale_options_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 Timesale
+        :param symbols: Options Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
+
+        service = "TIMESALE_OPTIONS"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Options TimeSale Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Options TimeSale Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_timesale_options_handler(self, handler: callable):
+        self.handlers["TIMESALE_OPTIONS"].append(BookHandler(handler, Fields.timesale))
+
+    def remove_timesale_options_handler(self, handler: callable):
+        self.handlers["TIMESALE_OPTIONS"].remove(BookHandler(handler, Fields.timesale))
 
     # ------------------------------------------------------------------------------------------------------------------
     # TIMESALE_FUTURES
+    async def timesale_futures_sub(self, symbols: str | list):
+        """
+        Subscribe to Level 2 Futures
+        :param symbols: Future Symbol or list of symbols to Subscribe to
+        :return: None
+        """
+
+        service = "TIMESALE_FUTURES"
+        command = "SUBS"
+        fields = 4
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Futures TimeSale Subscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures TimeSale Subscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    async def timesale_futures_unsub(self, symbols: str | list):
+        """
+        Unsubscribe to Level 2 Futures
+        :param symbols: Future Symbol or list of symbols to Unsubscribe to
+        :return: None
+        """
+
+        service = "TIMESALE_FUTURES"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"Futures TimeSale Unsubscription SUCCESS."
+                             f"Symbols: {symbols}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"Futures TimeSale Unsubscription FAILED."
+                              f"Symbols: {symbols}. Response: {response}")
+
+    def add_timesale_futures_handler(self, handler: callable):
+        self.handlers["TIMESALE_FUTURES"].append(BookHandler(handler, Fields.timesale))
+
+    def remove_timesale_futures_handler(self, handler: callable):
+        self.handlers["TIMESALE_FUTURES"].remove(BookHandler(handler, Fields.timesale))
 
     ####################################################################################################################
 
