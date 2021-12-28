@@ -135,7 +135,7 @@ class BookHandler(Handler):
 
         service = services[0]
 
-        exchange_fields = Fields.book_exchange.value
+        exchange_fields = Fields.book_exchange
         bids_asks = ["bids", "Asks"]
 
         data = msg.get(service)
