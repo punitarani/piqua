@@ -1203,11 +1203,58 @@ class StreamClient:
 
     # News
     # NEWS_HEADLINE
+    async def news_headline_sub(self, symbols: str | list):
+        """
+        Subscribe to News Headlines
+        :param symbols: Symbol or list of symbols to Subscribe to
+        :return: None
+        """
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # NEWS_STORY
+        service = "NEWS_HEADLINE"
+        command = "SUBS"
+        fields = 10
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # NEWS_HEADLINE_LIST
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command,
+                                              fields=fields)
+
+        if response.get("code") == 0:
+            self.logger.info(f"News Headline Subscription SUCCESS. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"News Headline Subscription FAILED. Response: {response}")
+
+    async def news_headline_unsub(self, symbols: str | list):
+        """
+        Unsubscribe from News Headlines
+        :param symbols: Symbol or list of symbols to Unsubscribe from
+        :return: None
+        """
+
+        service = "NEWS_HEADLINE"
+        command = "UNSUBS"
+
+        # Convert symbols to list if str
+        if isinstance(symbols, str):
+            symbols = [symbols]
+
+        response = await self.service_request(symbols=symbols,
+                                              service=service,
+                                              command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"News Headline Unsubscription SUCCESS. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"News Headline Unsubscription FAILED. Response: {response}")
+
+    def add_news_headline_handler(self, handler: callable):
+        self.handlers["NEWS_HEADLINE"].append(BookHandler(handler, Fields.news_headline))
+
+    def remove_news_headline_handler(self, handler: callable):
+        self.handlers["NEWS_HEADLINE"].remove(BookHandler(handler, Fields.news_headline))
 
     ####################################################################################################################
