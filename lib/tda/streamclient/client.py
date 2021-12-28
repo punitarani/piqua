@@ -421,7 +421,7 @@ class StreamClient:
 
                 # Stream is Alive
                 if "heartbeat" in data.keys():
-                    self.logger.debug(f"Socket is Alive. Received heartbeat: {data.get('heartbeat')}")
+                    continue
 
                 # Stream is Stopped
                 elif data.get("service") == "ADMIN":
