@@ -43,6 +43,10 @@ class Handler:
         Example msg:
         [{"service":"LISTED_BOOK", "timestamp":1640371904385,"command":"SUBS",
         "content":[{"key":"SPY","1":1640307600996,"2":[],"3":[]},{"key":"IWM","1":1640307600959,"2":[],"3":[]}]}]
+        
+        service = 'LISTED_BOOK'
+        
+        content = {"key":"SPY","1":1640307600996,"2":[],"3":[]}
         """
 
         msg = copy.deepcopy(msg)
@@ -51,16 +55,16 @@ class Handler:
             msg = [msg]
 
         output = {}
-
         for data in msg:
             service = data.get("service")
+
             if 'content' in data:
                 output_msg = {}
 
                 for content in data.get("content"):
                     content_msg = {}
 
-                    for field in content:
+                    for field in content.keys():
                         if field in self.fields.keys():
                             content_msg.update({self.fields.get(field): content.get(field)})
 
@@ -119,9 +123,8 @@ class BookHandler(Handler):
         476.98, '1': 500, '2': 1, '3': [{'0': 'ARCX', '1': 500, '2': 68391101}]}, {'0': 476.99, '1': 200, '2': 1, 
         '3': [{'0': 'CINN', '1': 200, '2': 68400012}]}]}
         
-        Bids/Asks
-        [{'0': 476.91, '1': 700, '2': 2, '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}]
-        """
+        Bids/Asks [{'0': 476.91, '1': 700, '2': 2, '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', 
+        '1': 200, '2': 68388306}]}] """
 
         services = list(set(msg.keys()))
 
@@ -283,6 +286,7 @@ class StreamClient:
         """
 
         msg = await self.Socket.recv()
+        # print(msg)
         return msg
 
     def _make_request(self,
@@ -351,8 +355,8 @@ class StreamClient:
 
         if "data" in msg.keys():
             for data in msg.get("data"):
-                if data.get("service") in self.handlers.keys():
 
+                if data.get("service") in self.handlers.keys():
                     for handler in self.handlers.get(data.get("service")):
                         # Label Message
                         data = handler.label_message(data)
@@ -737,10 +741,10 @@ class StreamClient:
             self.logger.error(f"L1 Options Unsubscription FAILED."
                               f"Symbols: {symbols}. Response: {response}")
 
-    def add_level_one_option_handler(self, handler: callable):
+    def add_level_one_options_handler(self, handler: callable):
         self.handlers["OPTION"].append(Handler(handler, Fields.level_one_options))
 
-    def remove_level_one_option_handler(self, handler: callable):
+    def remove_level_one_options_handler(self, handler: callable):
         self.handlers["OPTION"].remove(Handler(handler, Fields.level_one_options))
 
     # ------------------------------------------------------------------------------------------------------------------
