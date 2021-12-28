@@ -12,7 +12,7 @@ import websockets
 from websockets.extensions.permessage_deflate import ClientPerMessageDeflateFactory
 
 from config import account_id
-from .services import Fields
+from .services import Fields, QOS
 from ..account import Account
 from ..logger import TDALogger
 
@@ -596,6 +596,38 @@ class StreamClient:
 
     def remove_account_activity_handler(self, handler: callable):
         self.handlers["ACCT_ACTIVITY"].remove(Handler(handler, Fields.account_activity))
+
+    # -------------------------------------------------------------------------------------------------------------------
+
+    # QOS Update
+    async def update_QOS(self, level: str | QOS):
+        """
+        Update Quality of Service: rates of data updates per protocol
+        :param level: QOS Level: '0'(fastest)-'5'
+        :return: None
+        """
+
+        if isinstance(level, QOS):
+            level = level.value
+
+        service = "ADMIN"
+        command = "QOS"
+        params = {
+            "qoslevel": level
+        }
+
+        request, request_id = self._make_request(service=service, command=command, params=params)
+
+        # Send and Wait for Response
+        async with self._lock:
+            self.logger.info("Sending QOS update request")
+            await self.send({'requests': [request]})
+            response = await self.await_response(request_id=request_id, service=service, command=command)
+
+        if response.get("code") == 0:
+            self.logger.info(f"QOS update SUCCESS. Updated to: {level}. msg: {response.get('msg')}")
+        else:
+            self.logger.error(f"QOS update FAILED. Response: {response}")
 
     ####################################################################################################################
     # Level One
