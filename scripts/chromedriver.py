@@ -1,4 +1,4 @@
-# Chromedriver installing, upgrading and testing
+# Chromedriver and Chrome Browser installing, upgrading and testing
 
 import os
 from urllib.request import urlopen
@@ -46,13 +46,16 @@ class Chromedriver:
     # Chrome and chromedriver Main Function
     def main(self):
 
-        # Check if Chrome and chromedriver are installed
-        if not self.check_installed():
-            self.download_chromedriver()
-            self.download_chrome()
+        try:
+            # Check if Chrome and chromedriver are installed
+            if not self.check_installed():
+                self.download_chromedriver()
+                self.download_chrome()
 
-        # Test to see if Chrome and chromedriver are working
-        self.test()
+            # Test to see if Chrome and chromedriver are working
+            self.test()
+        except Exception as err:
+            self.logger.error(f"Error: {err}.")
 
     # Test if chrome browser works through selenium
     def test(self) -> None:
@@ -198,6 +201,8 @@ class Chromedriver:
             if cli_mode.upper() == "CLI":
                 self.logger.info("To install Chrome, run the following commands:")
                 self.logger.info("sudo apt-get install wget")
+
+                # TODO: Fix code to support ARM64 architecture
                 self.logger.info("wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb")
                 self.logger.info("sudo dpkg -i google-chrome-stable_current_amd64.deb")
 
