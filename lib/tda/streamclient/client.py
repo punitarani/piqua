@@ -407,10 +407,10 @@ class StreamClient:
                 if data.get("service") in self.handlers.keys():
                     for handler in self.handlers.get(data.get("service")):
                         # Label Message
-                        data = handler.label_message(data)
+                        labelled_data = handler.label_message(data)
 
                         # Handle Message
-                        h = handler(data)
+                        h = handler(labelled_data)
 
                         # Schedule Message if awaitable
                         if inspect.isawaitable(h):
