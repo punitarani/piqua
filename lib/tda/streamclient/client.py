@@ -20,6 +20,37 @@ from ..logger import TDALogger
 client_socket = {}
 
 
+class JSONDecode:
+    def __init__(self, msg):
+        """
+        JSONDecode class constructor
+        :param msg: message to decode
+        """
+        self.logger = TDALogger("Stream Client").logger
+
+    def __new__(cls, msg) -> dict:
+        """
+        Return decoded message when Class is instantiated
+        :param msg: Message to decode
+        """
+        return cls.decode(msg=msg)
+
+    @staticmethod
+    def decode(msg=None) -> dict:
+        """
+        Decode message
+        :param msg: Message to decode
+        :return: Decoded message as dict
+        """
+        logger = TDALogger("Stream Client").logger
+
+        try:
+            return json.loads(msg)
+        except Exception as err:
+            logger.error(f"{err} while decoding msg: ", msg)
+            return json.loads(msg, strict=False)
+
+
 class Handler:
     """
     Basic Stream Handler
@@ -379,7 +410,7 @@ class StreamClient:
             responses = await self.receive()
 
             # Parse responses string to json dict
-            responses = json.loads(responses)
+            responses = JSONDecode.decode(responses)
 
             # Check if response is for this request
             if "response" in responses.keys():
@@ -399,7 +430,7 @@ class StreamClient:
             msg = await self.receive()
 
         # Parse response string to json dict
-        msg = json.loads(msg)
+        msg = JSONDecode.decode(msg)
 
         if "data" in msg.keys():
             for data in msg.get("data"):
@@ -410,7 +441,7 @@ class StreamClient:
                         labelled_data = handler.label_message(data)
 
                         # Handle Message
-                        h = handler(labelled_data)
+                        h = handler(msg=labelled_data)
 
                         # Schedule Message if awaitable
                         if inspect.isawaitable(h):
