@@ -21,6 +21,9 @@ client_socket = {}
 
 
 class JSONDecode:
+    """
+    Decode JSON data from WebSocket message
+    """
     def __init__(self, msg):
         """
         JSONDecode class constructor
