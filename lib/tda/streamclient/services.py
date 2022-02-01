@@ -161,7 +161,7 @@ class Fields:
     }
 
     book = {
-        "0": "Symbol",
+        "0": "Mark",
         "1": "Time",
         "2": "Bids",
         "3": "Asks",

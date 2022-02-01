@@ -24,6 +24,7 @@ class JSONDecode:
     """
     Decode JSON data from WebSocket message
     """
+
     def __init__(self, msg):
         """
         JSONDecode class constructor
@@ -151,6 +152,12 @@ class BookHandler(Handler):
         '3': [{'0': 'ARCX', '1': 200, '2': 68390430}]}, {'0': 117.1, '1': 100, '2': 1, '3': [{'0': 'AMEX', '1': 100, 
         '2': 66007842}]}]}}
         
+        ticker data
+        {'key': 'SPY', 'BOOK_TIME': 1640653200830, 'BIDS': [{'0': 476.91, '1': 700, '2': 2, 
+        '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}], 'ASKS': [{'0': 
+        476.98, '1': 500, '2': 1, '3': [{'0': 'ARCX', '1': 500, '2': 68391101}]}, {'0': 476.99, '1': 200, '2': 1, 
+        '3': [{'0': 'CINN', '1': 200, '2': 68400012}]}]}
+        
         bid_ask_data
         {'key': 'SPY', 'BOOK_TIME': 1640653200830, 'BIDS': [{'0': 476.91, '1': 700, '2': 2, 
         '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', '1': 200, '2': 68388306}]}], 'ASKS': [{'0': 
@@ -160,6 +167,7 @@ class BookHandler(Handler):
         Bids/Asks [{'0': 476.91, '1': 700, '2': 2, '3': [{'0': 'ARCX', '1': 500, '2': 68388307}, {'0': 'CINN', 
         '1': 200, '2': 68388306}]}] """
 
+        # Ensure there is only one service
         services = list(set(msg.keys()))
 
         if len(services) > 1:
@@ -169,24 +177,39 @@ class BookHandler(Handler):
 
         service = services[0]
 
+        # Get fields
+        bid_fields = Fields.book_bids
+        ask_fields = Fields.book_asks
         exchange_fields = Fields.book_exchange
-        bids_asks = ["bids", "Asks"]
+        bids_asks = ["bids", "asks"]
 
+        # Get data from message
         data = msg.get(service)
         tickers = data.keys()
 
+        # Initialize new_data
         new_data = {}
 
-        # Ticker
+        # Iterate through tickers
         for ticker in tickers:
+
+            # Get ticker data from data
             ticker_data = data.get(ticker)
             ticker_data_keys = ticker_data.keys()
+
+            # Initialize new_ticker_data
             new_ticker_data = {}
 
             # Bid/Ask
             for bid_ask in bids_asks:
                 if bid_ask in ticker_data_keys:
                     new_bid_data = []
+
+                # Get bid_ask_fields
+                    if bid_ask == "Bids":
+                        bid_ask_fields = bid_fields
+                    else:
+                        bid_ask_fields = ask_fields
 
                     for bid_ask_data in ticker_data.get(bid_ask):
                         new_bid_ask = {}
@@ -210,11 +233,11 @@ class BookHandler(Handler):
 
                                     bid_ask_exchange.append(exchange_msg)
 
-                                new_bid_ask.update({self.fields.get(field): bid_ask_exchange})
+                                new_bid_ask.update({bid_ask_fields.get(field): bid_ask_exchange})
 
                             # Update other fields
                             elif field in self.fields.keys():
-                                new_bid_ask.update({self.fields.get(field): bid_ask_data.get(field)})
+                                new_bid_ask.update({bid_ask_fields.get(field): bid_ask_data.get(field)})
                             else:
                                 new_bid_ask.update({field: bid_ask_data.get(field)})
 
