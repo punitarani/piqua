@@ -11,7 +11,7 @@ loggers = {}
 
 # TDA Loggers
 class TDALogger:
-    def __init__(self, logger_name: str):
+    def __init__(self, logger_name: str, add_streamhandler: bool = True):
 
         self.logger_name = logger_name
 
@@ -23,14 +23,12 @@ class TDALogger:
         else:
             # Define handlers
             self.file_handler = logging.FileHandler(TDA_LOG, mode='a')
-            self.stream_handler = logging.StreamHandler(sys.stdout)
 
             # Define log formatter
             self.formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(message)s')
 
             # Add formatter to handlers
             self.file_handler.setFormatter(self.formatter)
-            self.stream_handler.setFormatter(self.formatter)
 
             # Get logger
             self.logger = logging.getLogger(name=self.logger_name)
@@ -41,7 +39,11 @@ class TDALogger:
 
             # Add handler to logger
             self.logger.addHandler(self.file_handler)
-            self.logger.addHandler(self.stream_handler)
+
+            if add_streamhandler:
+                self.stream_handler = logging.StreamHandler(sys.stdout)
+                self.stream_handler.setFormatter(self.formatter)
+                self.logger.addHandler(self.stream_handler)
 
             # Save to loggers dict
             loggers[self.logger_name] = self.logger
