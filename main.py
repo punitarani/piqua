@@ -9,7 +9,7 @@ from src.st_pages.options import options
 
 
 # Page config
-st.set_page_config(page_title="Piqua", layout="wide")
+# st.set_page_config(page_title="Piqua", layout="wide")
 st.title("Piqua")
 
 
